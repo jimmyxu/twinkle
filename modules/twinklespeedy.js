@@ -604,7 +604,7 @@ Twinkle.speedy.categoryList = [
 	}
 ];
 
-Twinkle.speedy.userAllList = [
+Twinkle.speedy.userList = [
 	{
 		label: 'O1: 用户请求删除自己的用户页或其子页面。',
 		value: 'o1',
