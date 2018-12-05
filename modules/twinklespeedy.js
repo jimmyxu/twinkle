@@ -367,6 +367,11 @@ Twinkle.speedy.callback.modeChanged = function twinklespeedyCallbackModeChanged(
 			work_area.append( { type: radioOrCheckbox, name: 'csd', list: Twinkle.speedy.generateCsdList(Twinkle.speedy.categoryList, mode) } );
 			break;
 
+		case 118:  // draft
+			work_area.append( { type: 'header', label: '草稿' } );
+			work_area.append( { type: radioOrCheckbox, name: 'csd', list: Twinkle.speedy.generateCsdList(Twinkle.speedy.draftList, mode) } );
+			break;
+
 		default:
 			break;
 	}
@@ -386,6 +391,9 @@ Twinkle.speedy.callback.modeChanged = function twinklespeedyCallbackModeChanged(
 		work_area.append( { type: 'header', label: '重定向' } );
 		if (namespace === 0 || namespace === 118) {
 			work_area.append( { type: radioOrCheckbox, name: 'csd', list: Twinkle.speedy.generateCsdList(Twinkle.speedy.redirectArticleList, mode) } );
+		}
+		if (namespace === 6) {
+			work_area.append( { type: radioOrCheckbox, name: 'csd', list: Twinkle.speedy.generateCsdList(Twinkle.speedy.redirectFileList, mode) } );
 		}
 		work_area.append( { type: radioOrCheckbox, name: 'csd', list: Twinkle.speedy.generateCsdList(Twinkle.speedy.redirectList, mode) } );
 	}
@@ -560,26 +568,32 @@ Twinkle.speedy.fileList = [
 			tooltip: '如与本文件名相同则可留空，可不含“File:”前缀。'
 		},
 		hideWhenMultiple: true
+	},
+	{
+		label: 'F8:  明显侵权之文件',
+		value: 'f8',
+		tooltip: '包括以下两种情况：1. 上传者宣称拥有，而在其他来源找到的文件。2. 文件宣称由某作者依据某自由版权协议发布，但找不到该自由协议的声明。',
+		hideWhenUser: true
 	}
 ];
 
 Twinkle.speedy.articleList = [
 	{
-		label: 'A1: 非常短，而且没有定义或内容。',
+		label: 'A1: 非常短，而且没有定义或内容',
 		value: 'a1',
 		tooltip: '例如：“他是一个很有趣的人，他创建了工厂和庄园。并且，顺便提一下，他的妻子也很好。”如果能够发现任何相关的内容，可以将这个页面重定向到相关的条目上。'
 	},
 	{
-		label: 'A2: 内容只包括外部连接、参见、图书参考、类别标签、模板标签、跨语言连接的条目。',
+		label: 'A2: 内容只包括外部连接、参见、图书参考、类别标签、模板标签、跨语言连接的条目',
 		value: 'a2',
 		tooltip: '请注意：有些维基人创建条目时会分开多次保存，请避免删除有人正在工作的页面。带有{{inuse}}的不适用。'
 	},
 	{
-		label: 'A3: 复制自其他中文维基计划，或是与其他中文维基计划内容相同的文章。',
+		label: 'A3: 复制自其他中文维基计划，或是与其他中文维基计划内容相同的文章',
 		value: 'a3'
 	},
 	{
-		label: 'A5: 条目建立时之内容即与其他现有条目内容完全相同，且名称不适合做为其他条目之重定向。',
+		label: 'A5: 条目建立时之内容即与其他现有条目内容完全相同，且名称不适合做为其他条目之重定向',
 		value: 'a5',
 		tooltip: '条目被建立时，第一个版本的内容与当时其他现存条目完全相同，且这个条目的名称不适合改为重定向，就可以提送快速删除。如果名称可以作为重定向，就应直接改重定向，不要提送快速删除。如果是多个条目合并产生的新条目，不适用。如果是从主条目拆分产生的条目，不适用；如有疑虑，应提送存废讨论处理。',
 		subgroup: {
@@ -590,7 +604,7 @@ Twinkle.speedy.articleList = [
 		}
 	},
 	{
-		label: 'A6: 复制自其他维基百科语言版本，且完全没有翻译。',
+		label: 'A6: 复制自其他维基百科语言版本，且完全没有翻译',
 		value: 'a6',
 		tooltip: '如果并不是复制于任何其他的维基百科语言版本，请换用{{notmandarin}}。带有{{inuse}}和{{translating}}模板的不适用。'
 	}
@@ -598,20 +612,28 @@ Twinkle.speedy.articleList = [
 
 Twinkle.speedy.categoryList = [
 	{
-		label: 'O4: 空的类别（没有条目也没有子类别）。',
+		label: 'O4: 空的类别（没有条目也没有子类别）',
 		value: 'o4',
 		tooltip: '不适用于Category:不要删除的分类中的空分类。'
 	}
 ];
 
+Twinkle.speedy.draftList = [
+	{
+		label: 'O7: 废弃草稿',
+		value: 'o7',
+		tooltip: '任何六个月内无编辑之草稿。'
+	}
+];
+
 Twinkle.speedy.userList = [
 	{
-		label: 'O1: 用户请求删除自己的用户页或其子页面。',
+		label: 'O1: 用户请求删除自己的用户页或其子页面',
 		value: 'o1',
 		tooltip: '如果是从其他名字空间移动来的，须附有合理原因。'
 	},
 	{
-		label: 'O3: 匿名用户的用户讨论页，其中的内容不再有用。',
+		label: 'O3: 匿名用户的用户讨论页，其中的内容不再有用',
 		value: 'o3',
 		tooltip: '避免给使用同一IP地址的用户带来混淆。不适用于用户讨论页的存盘页面。'
 	}
@@ -653,9 +675,9 @@ Twinkle.speedy.generalList = [
 		hideWhenUser: true
 	},
 	{
-		label: 'G10: 原作者清空页面或提出删除，且贡献者只有一人',
+		label: 'G10: 原作者清空页面或提出删除，且贡献者只有一人（对页面内容无实际修改的除外；提请须出于善意，及附有合理原因）',
 		value: 'g10',
-		tooltip: '对条目内容无实际修改的除外；提请须出于善意，及附有合理原因。',
+		tooltip: '对于条目：如果贡献者只有一人（对条目内容无实际修改的除外），并附有合理原因，适用此项。因移动产生的重定向页，移动之用户不能视为该重定向页面之原作者。',
 		subgroup: {
 			name: 'g10_rationale',
 			type: 'input',
@@ -677,7 +699,8 @@ Twinkle.speedy.generalList = [
 	},
 	{
 		label: 'G13: 明显、拙劣的机器翻译',
-		value: 'g13'
+		value: 'g13',
+		tooltip: '不适用于所有的讨论名字空间和用户名字空间。'
 	},
 	{
 		label: 'G14: 超过两周没有进行任何翻译的非现代标准汉语页面',
@@ -699,15 +722,22 @@ Twinkle.speedy.generalList = [
 
 Twinkle.speedy.redirectArticleList = [
 	{
-		label: 'R2: 跨名字空间重定向。',
+		label: 'R2: 跨名字空间重定向',
 		value: 'r2',
 		tooltip: '由条目的名字空间重定向至非条目名字空间，或将用户页移出条目名字空间时遗留的重定向。'
 	}
 ];
 
+Twinkle.speedy.redirectFileList = [
+	{
+		label: 'R6: 移动文件而产生的重定向，且页面标题不匹配文件名称指引',
+		value: 'r6'
+	}
+];
+
 Twinkle.speedy.redirectList = [
 	{
-		label: 'R3: 格式错误，或明显笔误的重定向。',
+		label: 'R3: 格式错误，或明显笔误的重定向',
 		value: 'r3',
 		tooltip: '非一眼能看出的拼写错误和翻译或标题用字的争议应交由存废讨论处理。',
 		subgroup: {
@@ -726,7 +756,7 @@ Twinkle.speedy.redirectList = [
 		hideSubgroupWhenSysop: true
 	},
 	{
-		label: 'R5: 指向本身的重定向或循环的重定向。',
+		label: 'R5: 指向本身的重定向或循环的重定向',
 		value: 'r5',
 		tooltip: '如A→B→C→……→A。'
 	}
@@ -756,15 +786,18 @@ Twinkle.speedy.normalizeHash = {
 	'r2': 'r2',
 	'r3': 'r3',
 	'r5': 'r5',
+	'r6': 'r6',
 	'f1': 'f1',
 	'f3': 'f3',
 	'f4': 'f4',
 	'f5': 'f5',
 	'f6': 'f6',
 	'f7': 'f7',
+	'f8': 'f8',
 	'o1': 'o1',
 	'o3': 'o3',
-	'o4': 'o4'
+	'o4': 'o4',
+	'o7': 'o7'
 };
 
 // keep this synched with [[MediaWiki:Deletereason-dropdown]]
@@ -793,6 +826,7 @@ Twinkle.speedy.reasonHash = {
 	'r2': '跨名字空间重定向',
 	'r3': '标题错误的重定向',
 	'r5': '指向本身的重定向或循环的重定向',
+	'r6': '移动文件而产生的重定向',
 // Images and media
 	'f1': '重复的图片',
 	'f3': '[[:Category:未知版权的档案]]',
@@ -800,13 +834,16 @@ Twinkle.speedy.reasonHash = {
 	'f5': '已有高分辨率的图片取代',
 	'f6': '孤立而没有被条目使用的非自由版权图片',
 	'f7': '[[:Category:与维基共享资源重复的档案]]',
+	'f8': '明显侵权之文件',
 // User pages
 	'o1': '用户请求删除自己的用户页或其子页面',
 	'o3': '匿名用户的讨论页',
 // Categories
-	'o4': '空的类别'
+	'o4': '空的类别',
 // Templates
 // Portals
+// Drafts
+	'o7': '废弃草稿'
 };
 
 Twinkle.speedy.callbacks = {
