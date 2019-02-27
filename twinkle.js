@@ -1,9 +1,9 @@
 /**
  * vim: set noet sts=0 sw=8:
  * +-------------------------------------------------------------------------+
- * |                       === 警告：全局小工具文件 ===                      |
- * |                      对此文件的修改会影响许多用户。                     |
- * |                           修改前请联系维护者。                          |
+ * |                         === 警告：全局小工具文件 ===                         |
+ * |                          对此文件的修改会影响许多用户。                        |
+ * |                              修改前请联系维护者。                            |
  * +-------------------------------------------------------------------------+
  *
  * 从Github导入[https://github.com/jimmyxu/twinkle]
@@ -15,8 +15,9 @@
  *
  * 维护者：~~~
  */
-
 //<nowiki>
+
+/* global Morebits */
 
 ( function ( window, document, $, undefined ) { // Wrap with anonymous function
 
@@ -42,15 +43,17 @@ Twinkle.defaultConfig = {};
  * For help on the actual preferences, see the comments in twinkleconfig.js.
  */
 Twinkle.defaultConfig.twinkle = {
-	 // General
+	// General
 	summaryAd: "",
 	deletionSummaryAd: " ([[WP:TW|TW]])",
 	protectionSummaryAd: " ([[WP:TW|TW]])",
 	userTalkPageMode: "tab",
 	dialogLargeFont: false,
-	 // Block
+
+	// Block
 	blankTalkpageOnIndefBlock: false,
-	 // Fluff (revert and rollback)
+
+	// Fluff (revert and rollback)
 	openTalkPage: [  ],
 	openTalkPageOnAutoRevert: false,
 	markRevertedPagesAsMinor: [ "vand" ],
@@ -58,16 +61,19 @@ Twinkle.defaultConfig.twinkle = {
 	offerReasonOnNormalRevert: true,
 	confirmOnFluff: false,
 	showRollbackLinks: [ "diff", "others" ],
-	 // DI (twinkleimage)
+
+	// DI (twinkleimage)
 	notifyUserOnDeli: true,
 	deliWatchPage: "default",
 	deliWatchUser: "default",
-	 // CSD
+
+	// CSD
 	speedySelectionStyle: "buttonClick",
 	watchSpeedyPages: [ ],
 	markSpeedyPagesAsPatrolled: true,
+
 	// these next two should probably be identical by default
-	notifyUserOnSpeedyDeletionNomination: [ "db", "g1", "g2", "g3", "g5", "g11", "g12", "g13", "g16", "a1", "a2", "a5", "a6", "f6", "r2", "r3" ],
+	notifyUserOnSpeedyDeletionNomination:    [ "db", "g1", "g2", "g3", "g5", "g11", "g12", "g13", "g16", "a1", "a2", "a5", "a6", "f6", "r2", "r3" ],
 	welcomeUserOnSpeedyDeletionNotification: [ "db", "g1", "g2", "g3", "g5", "g11", "g12", "g13", "g16", "a1", "a2", "a5", "a6", "f6", "r2", "r3" ],
 	promptForSpeedyDeletionSummary: [],
 	openUserTalkPageOnSpeedyDelete: [  ],
@@ -80,23 +86,28 @@ Twinkle.defaultConfig.twinkle = {
 	speedyLogPageName: "CSD日志",
 	noLogOnSpeedyNomination: [ "o1" ],
 	enlargeG11Input: true,
-	 // Unlink
+
+	// Unlink
 	unlinkNamespaces: [ "0", "10", "100", "118" ],
-	 // Warn
+
+	// Warn
 	defaultWarningGroup: "1",
 	showSharedIPNotice: true,
 	watchWarnings: false,
 	customWarningList: [],
-	 // XfD
+
+	// XfD
 	xfdWatchDiscussion: "default",
 	xfdWatchPage: "default",
 	xfdWatchUser: "default",
 	markXfdPagesAsPatrolled: true,
-	 // Copyvio
+
+	// Copyvio
 	copyvioWatchPage: "default",
 	copyvioWatchUser: "default",
 	markCopyvioPagesAsPatrolled: true,
-	 // Hidden preferences
+
+	// Hidden preferences
 	revertMaxRevisions: 50,
 	batchdeleteChunks: 50,
 	batchMax: 5000,
@@ -121,7 +132,7 @@ if ( mw.config.get( "skin" ) === "vector" ) {
 }
 
 Twinkle.defaultConfig.friendly = {
-	 // Tag
+	// Tag
 	groupByDefault: true,
 	watchTaggedPages: false,
 	watchMergeDiscussions: false,
@@ -129,13 +140,12 @@ Twinkle.defaultConfig.friendly = {
 	markTaggedPagesAsPatrolled: true,
 	tagArticleSortOrder: "cat",
 	customTagList: [],
+
 	 // Talkback
 	markTalkbackAsMinor: true,
 	insertTalkbackSignature: true,  // always sign talkback templates
 	talkbackHeading: "回复通告",
 	mailHeading: "您有新邮件！",
-	 // Shared
-	markSharedIPAsMinor: true
 };
 
 Twinkle.getPref = function twinkleGetPref( name ) {
@@ -307,7 +317,8 @@ Twinkle.addPortletLink = function( task, text, id, tooltip )
 		Twinkle.addPortlet( Twinkle.getPref( "portletArea" ), Twinkle.getPref( "portletId" ), Twinkle.getPref( "portletName" ), Twinkle.getPref( "portletType" ), Twinkle.getPref( "portletNext" ));
 	}
 	var link = mw.util.addPortletLink( Twinkle.getPref( "portletId" ), typeof task === "string" ? task : "#", text, id, tooltip );
-	if ( $.isFunction( task ) ) {
+	$('.client-js .skin-vector #p-cactions').css('margin-right', 'initial');
+	if ( typeof task === "function" ) {
 		$( link ).click(function ( ev ) {
 			task();
 			ev.preventDefault();
@@ -332,7 +343,7 @@ $.ajax({
 	url: scriptpathbefore + "User:" + encodeURIComponent( mw.config.get("wgUserName")) + "/twinkleoptions.js" + scriptpathafter,
 	dataType: "text"
 })
-	.fail(function () {	mw.util.jsMessage( "未能加载twinkleoptions.js" ); })
+	.fail(function () {	mw.notify( "未能加载twinkleoptions.js" ); })
 	.done(function ( optionsText ) {
 
 		// Quick pass if user has no options
@@ -349,7 +360,7 @@ $.ajax({
 		}
 
 		try {
-			var options = $.parseJSON( optionsText );
+			var options = JSON.parse( optionsText );
 
 			// Assuming that our options evolve, we will want to transform older versions:
 			//if ( options.optionsVersion === undefined ) {
@@ -367,7 +378,7 @@ $.ajax({
 			}
 		}
 		catch ( e ) {
-			mw.util.jsMessage("未能解析twinkleoptions.js");
+			mw.notify("未能解析twinkleoptions.js");
 		}
 	})
 	.always(function () {
@@ -378,14 +389,15 @@ $.ajax({
 // For example, mw.loader.load(scriptpathbefore + "User:UncleDouggie/morebits-test.js" + scriptpathafter);
 
 Twinkle.load = function () {
-	// Don't activate on special pages other than "(Deleted)Contributions" so that they load faster, especially the watchlist.
+	// Don't activate on special pages other than those on the whitelist so that
+	// they load faster, especially the watchlist.
+	var specialPageWhitelist = [ 'Contributions', 'DeletedContributions', 'Prefixindex' ];
 	var isSpecialPage = ( mw.config.get('wgNamespaceNumber') === -1 &&
-		mw.config.get('wgCanonicalSpecialPageName') !== "Contributions" &&
-		mw.config.get('wgCanonicalSpecialPageName') !== "DeletedContributions" &&
-		mw.config.get('wgCanonicalSpecialPageName') !== "Prefixindex" ),
+		specialPageWhitelist.indexOf( mw.config.get('wgCanonicalSpecialPageName') ) === -1 );
 
-		// Also, Twinkle is incompatible with Internet Explorer versions 8 or lower, so don't load there either.
-		isOldIE = ( $.client.profile().name === 'msie' );
+	// Also, Twinkle is incompatible with Internet Explorer versions 8 or lower,
+	// so don't load there either.
+	var isOldIE = ( $.client.profile().name === 'msie' );
 
 	// Prevent users that are not autoconfirmed from loading Twinkle as well.
 	if ( isSpecialPage || isOldIE || !Twinkle.userAuthorized ) {
@@ -428,7 +440,7 @@ Twinkle.load = function () {
 		Twinkle.close();
 	}
 	// Run the initialization callbacks for any custom modules
-	$( Twinkle.initCallbacks ).each(function ( k, v ) { v(); });
+	Twinkle.initCallbacks.forEach(function ( func ) { func(); });
 	Twinkle.addInitCallback = function ( func ) { func(); };
 
 	// Increases text size in Twinkle dialogs, if so configured
@@ -440,4 +452,4 @@ Twinkle.load = function () {
 
 } ( window, document, jQuery )); // End wrap with anonymous function
 
-// </nowiki>
+//</nowiki>

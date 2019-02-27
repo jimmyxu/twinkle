@@ -1,4 +1,4 @@
-// <nowiki>
+//<nowiki>
 // vim: set noet sts=0 sw=8:
 /**
  * morebits.js
@@ -43,19 +43,7 @@ window.Morebits = Morebits;  // allow global access
  */
 
 Morebits.userIsInGroup = function ( group ) {
-	return $.inArray(group, mw.config.get( 'wgUserGroups' )) !== -1;
-};
-
-
-
-/**
- * **************** Morebits.isIPAddress() ****************
- * Helper function: Returns true if given string contains a valid IPv4 or
- * IPv6 address
- */
-
-Morebits.isIPAddress = function ( address ) {
-	return mw.util.isIPv4Address(address) || mw.util.isIPv6Address(address);
+	return mw.config.get( 'wgUserGroups' ).indexOf( group ) !== -1;
 };
 
 
@@ -72,7 +60,7 @@ Morebits.sanitizeIPv6 = function ( address ) {
 	if ( address === '' ) {
 		return null;
 	}
-	if ( mw.util.isIPv4Address( address ) || !mw.util.isIPv6Address( address ) ) {
+	if ( !mw.util.isIPv6Address( address ) ) {
 		return address; // nothing else to do for IPv4 addresses or invalid ones
 	}
 	// Remove any whitespaces, convert to upper case
@@ -351,7 +339,7 @@ Morebits.quickForm.element.prototype.compute = function QuickFormElementCompute(
 				if( current.subgroup ) {
 					var tmpgroup = current.subgroup;
 
-					if( ! $.isArray( tmpgroup ) ) {
+					if( ! Array.isArray( tmpgroup ) ) {
 						tmpgroup = [ tmpgroup ];
 					}
 
@@ -561,7 +549,7 @@ Morebits.quickForm.element.prototype.compute = function QuickFormElementCompute(
 			node.setAttribute( 'name', data.name );
 		}
 		if (data.label) {
-			if ( ! $.isArray( data.label ) ) {
+			if ( ! Array.isArray( data.label ) ) {
 				data.label = [ data.label ];
 			}
 			var result = document.createElement( 'span' );
@@ -762,8 +750,6 @@ Morebits.quickForm.getElementLabelObject = function QuickFormGetElementLabelObje
 	} else {
 		return element.parentNode.getElementsByTagName("label")[0];
 	}
-
-	return null;
 };
 
 Morebits.quickForm.getElementLabel = function QuickFormGetElementLabel(element) {
@@ -870,7 +856,9 @@ HTMLFormElement.prototype.getChecked = function( name, type ) {
 /**
  * **************** RegExp ****************
  *
- * RegExp.escape: Will escape a string to be used in a RegExp
+ * Escapes a string to be used in a RegExp
+ * @param {string} text - string to be escaped
+ * @param {boolean} [space_fix] - Set this true to replace spaces and underscore with `[ _]` as they are often equivalent
  */
 
 RegExp.escape = function( text, space_fix ) {
@@ -1004,26 +992,35 @@ Morebits.string = {
 		str = str.toString();
 		return str.substr( 0, 1 ).toLowerCase() + str.substr( 1 );
 	},
-	splitWeightedByKeys: function( str, start, end, skip ) {
+
+	/**
+	 * Gives an array of substrings of `str` starting with `start` and
+	 * ending with `end`, which is not in `skiplist`
+	 * @param {string} str
+	 * @param {string} start
+	 * @param {string} end
+	 * @param {(array|string)} [skiplist]
+	 */
+	splitWeightedByKeys: function( str, start, end, skiplist ) {
 		if( start.length !== end.length ) {
 			throw new Error( '起始和结束标记必须等长' );
 		}
 		var level = 0;
 		var initial = null;
 		var result = [];
-		if( ! $.isArray( skip ) ) {
-			if( skip === undefined ) {
-				skip = [];
-			} else if( typeof skip === 'string' ) {
-				skip = [ skip ];
+		if( ! Array.isArray( skiplist ) ) {
+			if( skiplist === undefined ) {
+				skiplist = [];
+			} else if( typeof skiplist === 'string' ) {
+				skiplist = [ skiplist ];
 			} else {
-				throw new Error( "不适用的跳过参数" );
+				throw new Error( "不适用的skiplist参数" );
 			}
 		}
 		for( var i  = 0; i < str.length; ++i ) {
-			for( var j = 0; j < skip.length; ++j ) {
-				if( str.substr( i, skip[j].length ) === skip[j] ) {
-					i += skip[j].length - 1;
+			for( var j = 0; j < skiplist.length; ++j ) {
+				if( str.substr( i, skiplist[j].length ) === skiplist[j] ) {
+					i += skiplist[j].length - 1;
 					continue;
 				}
 			}
@@ -1045,7 +1042,12 @@ Morebits.string = {
 
 		return result;
 	},
-	// for deletion/other templates taking a freeform "reason" from a textarea (e.g. PROD, XFD, RPP)
+
+	/**
+	 * Formats freeform "reason" (from a textarea) for deletion/other templates
+	 * that are going to be substituted, (e.g. PROD, XFD, RPP)
+	 * @param {string} str
+	 */
 	formatReasonText: function( str ) {
 		var result = str.toString().trimRight();
 		var unbinder = new Morebits.unbinder(result);
@@ -1053,31 +1055,28 @@ Morebits.string = {
 		unbinder.content = unbinder.content.replace(/\|/g, "{{subst:!}}");
 		return unbinder.rebind();
 	},
-	// a replacement for String.prototype.replace() when the second parameter (the
-	// replacement string) is arbitrary, such as a username or freeform user input,
-	// and may contain dollar signs
+
+	/**
+	 * a replacement for `String.prototype.replace()` when the second parameter
+	 * (the replacement string) is arbitrary, such as a username or freeform user input,
+	 * and may contain dollar signs
+	 */
 	safeReplace: function morebitsStringSafeReplace(string, pattern, replacement) {
 		return string.replace(pattern, replacement.replace(/\$/g, "$$$$"));
 	}
 };
 
 
-
 /**
  * **************** Morebits.array ****************
- *
- * uniq(arr): returns a copy of the array with duplicates removed
- *
- * dups(arr): returns a copy of the array with the first instance of each value
- *            removed; subsequent instances of those values (duplicates) remain
- *
- * chunk(arr, size): breaks up |arr| into smaller arrays of length |size|, and
- *                   returns an array of these "chunked" arrays
  */
 
 Morebits.array = {
+	/**
+	 * @returns a copy of the array with duplicates removed
+	 */
 	uniq: function(arr) {
-		if ( ! $.isArray( arr ) ) {
+		if ( ! Array.isArray( arr ) ) {
 			throw "A non-array object passed to Morebits.array.uniq";
 		}
 		var result = [];
@@ -1089,8 +1088,13 @@ Morebits.array = {
 		}
 		return result;
 	},
+
+	/**
+	 * @returns a copy of the array with the first instance of each value
+	 * removed; subsequent instances of those values (duplicates) remain
+	 */
 	dups: function(arr) {
-		if ( ! $.isArray( arr ) ) {
+		if ( ! Array.isArray( arr ) ) {
 			throw "A non-array object passed to Morebits.array.dups";
 		}
 		var uniques = [];
@@ -1105,8 +1109,16 @@ Morebits.array = {
 		}
 		return result;
 	},
+
+
+	/**
+	 * breaks up `arr` into smaller arrays of length `size`, and
+	 * @returns an array of these "chunked" arrays
+	 * @param {array} arr
+	 * @param {number} size
+	 */
 	chunk: function( arr, size ) {
-		if ( ! $.isArray( arr ) ) {
+		if ( ! Array.isArray( arr ) ) {
 			throw "A non-array object passed to Morebits.array.chunk";
 		}
 		if( typeof size !== 'number' || size <= 0 ) { // pretty impossible to do anything :)
@@ -1126,14 +1138,12 @@ Morebits.array = {
 };
 
 
-
 /**
  * **************** Morebits.pageNameNorm ****************
  * Stores a normalized version of the wgPageName variable (underscores converted to spaces).
  * For queen/king/whatever and country!
  */
 Morebits.pageNameNorm = mw.config.get('wgPageName').replace(/_/g, ' ');
-
 
 
 /**
@@ -1193,35 +1203,10 @@ Morebits.unbinder.getCallback = function UnbinderGetCallback(self) {
  * is fairly unlikely that anyone will iterate over a Date object.
  */
 
-Date.monthNames = [
-	'January',
-	'February',
-	'March',
-	'April',
-	'May',
-	'June',
-	'July',
-	'August',
-	'September',
-	'October',
-	'November',
-	'December'
-];
+Date.monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+	'July', 'August', 'September', 'October', 'November','December' ];
 
-Date.monthNamesAbbrev = [
-	'Jan',
-	'Feb',
-	'Mar',
-	'Apr',
-	'May',
-	'Jun',
-	'Jul',
-	'Aug',
-	'Sep',
-	'Oct',
-	'Nov',
-	'Dec'
-];
+Date.monthNamesAbbrev = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 Date.prototype.getMonthName = function() {
 	return Date.monthNames[ this.getMonth() ];
@@ -1318,11 +1303,12 @@ Morebits.wikipedia.namespacesFriendly = {
  * **************** Morebits.wiki ****************
  * Various objects for wiki editing and API access
  */
-
 Morebits.wiki = {};
 
-// Determines whether the current page is a redirect or soft redirect
-// (fails to detect soft redirects on edit, history, etc. pages)
+/**
+ * Determines whether the current page is a redirect or soft redirect
+ * (fails to detect soft redirects on edit, history, etc. pages)
+ */
 Morebits.wiki.isPageRedirect = function wikipediaIsPageRedirect() {
 	return !!(mw.config.get("wgIsRedirect") || document.getElementById("softredirect"));
 };
@@ -1372,7 +1358,7 @@ Morebits.wiki.actionCompleted.event = function() {
 	new Morebits.status( Morebits.wiki.actionCompleted.notice, Morebits.wiki.actionCompleted.postfix, 'info' );
 	if( Morebits.wiki.actionCompleted.redirect ) {
 		// if it isn't a URL, make it one. TODO: This breaks on the articles 'http://', 'ftp://', and similar ones.
-		if( !( (/^\w+\:\/\//).test( Morebits.wiki.actionCompleted.redirect ) ) ) {
+		if( !( (/^\w+:\/\//).test( Morebits.wiki.actionCompleted.redirect ) ) ) {
 			Morebits.wiki.actionCompleted.redirect = mw.util.getUrl( Morebits.wiki.actionCompleted.redirect );
 			if( Morebits.wiki.actionCompleted.followRedirect === false ) {
 				Morebits.wiki.actionCompleted.redirect += "?redirect=no";
@@ -1400,14 +1386,16 @@ Morebits.wiki.removeCheckpoint = function() {
 /**
  * **************** Morebits.wiki.api ****************
  * An easy way to talk to the MediaWiki API.
- *
- * Constructor parameters:
- *    currentAction: the current action (required)
- *    query: the query (required)
- *    onSuccess: the function to call when request gotten
- *    statusElement: a Morebits.status object to use for status messages (optional)
- *    onError: the function to call if an error occurs (optional)
  */
+
+ /**
+  * @constructor
+  * @param {string} currentAction - The current action (required)
+  * @param {Object} query - The querys (required)
+  * @param {Function} onSuccess - The function to call when request gotten
+  * @param {Object} [statusElement] - A Morebits.status object to use for status messages (optional)
+  * @param {Function} [onError] - The function to call if an error occurs (optional)
+  */
 Morebits.wiki.api = function( currentAction, query, onSuccess, statusElement, onError ) {
 	this.currentAction = currentAction;
 	this.query = query;
@@ -1436,8 +1424,10 @@ Morebits.wiki.api.prototype = {
 	errorCode: null, // short text error code, if any, as documented in the MediaWiki API
 	errorText: null, // full error description, if any
 
-	// post(): carries out the request
-	// do not specify a parameter unless you really really want to give jQuery some extra parameters
+	/**
+	 * Carries out the request.
+	 * Do not specify a parameter unless you really really want to give jQuery some extra parameters
+	 */
 	post: function( callerAjaxParameters ) {
 
 		++Morebits.wiki.numberOfActionsLeft;
@@ -1454,7 +1444,7 @@ Morebits.wiki.api.prototype = {
 		}, callerAjaxParameters );
 
 		return $.ajax( ajaxparams ).done(
-			function(xml, statusText, jqXHR) {
+			function(xml, statusText) {
 				this.statusText = statusText;
 				this.responseXML = xml;
 				this.errorCode = $(xml).find('error').attr('code');
@@ -1550,72 +1540,46 @@ Morebits.wiki.api.setApiUserAgent = function( ua ) {
  * Callback functions may invoke any Morebits.wiki.page prototype method using this reference.
  *
  *
- * NOTE: This list of member functions is incomplete.
+ * HIGHLIGHTS:
  *
  * Constructor: Morebits.wiki.page(pageName, currentAction)
  *    pageName - the name of the page, prefixed by the namespace (if any)
  *               (for the current page, use mw.config.get('wgPageName'))
  *    currentAction - a string describing the action about to be undertaken (optional)
  *
- * load(onSuccess, onFailure): Loads the text for the page
- *    onSuccess - callback function which is called when the load has succeeded
- *    onFailure - callback function which is called when the load fails (optional)
+ * onSuccess and onFailure are callback functions called when the operation is a success or failure
+ * if enclosed in [brackets], it indicates that it is optional
  *
- * save(onSuccess, onFailure): Saves the text for the page. Must be preceded by calling load().
- *    onSuccess - callback function which is called when the save has succeeded (optional)
- *    onFailure - callback function which is called when the save fails (optional)
+ * load(onSuccess, [onFailure]): Loads the text for the page
+ *
+ * getPageText(): returns a string containing the text of the page after a successful load()
+ *
+ * save([onSuccess], [onFailure]):  Saves the text set via setPageText() for the page.
+ * 									Must be preceded by calling load().
  *    Warning: Calling save() can result in additional calls to the previous load() callbacks to
  *             recover from edit conflicts!
  *             In this case, callers must make the same edit to the new pageText and reinvoke save().
  *             This behavior can be disabled with setMaxConflictRetries(0).
  *
- * append(onSuccess, onFailure): Adds the text provided via setAppendText() to the end of the page.
+ * append([onSuccess], [onFailure]): Adds the text provided via setAppendText() to the end of the page.
  *                               Does not require calling load() first.
- *    onSuccess - callback function which is called when the method has succeeded (optional)
- *    onFailure - callback function which is called when the method fails (optional)
  *
- * prepend(onSuccess, onFailure): Adds the text provided via setPrependText() to the start of the page.
+ * prepend([onSuccess], [onFailure]): Adds the text provided via setPrependText() to the start of the page.
  *                                Does not require calling load() first.
- *    onSuccess - callback function which is called when the method has succeeded (optional)
- *    onFailure - callback function which is called when the method fails (optional)
+ *
+ * move(onSuccess, [onFailure]): Moves a page to another title
+ *
+ * deletePage(onSuccess, [onFailure]): Deletes a page (for admins only)
+ *
+ * protect(onSuccess, [onFailure]): Protects a page
  *
  * getPageName(): returns a string containing the name of the loaded page, including the namespace
  *
- * getPageText(): returns a string containing the text of the page after a successful load()
+ * setPageText(pageText) sets the updated page text that will be saved when save() is called
  *
- * setPageText(pageText)
- *    pageText - string containing the updated page text that will be saved when save() is called
+ * setAppendText(appendText) sets the text that will be appended to the page when append() is called
  *
- * setAppendText(appendText)
- *    appendText - string containing the text that will be appended to the page when append() is called
- *
- * setPrependText(prependText)
- *    prependText - string containing the text that will be prepended to the page when prepend() is called
- *
- * setEditSummary(summary)
- *    summary - string containing the text of the edit summary that will be used when save() is called
- *
- * setMinorEdit(minorEdit)
- *    minorEdit is a boolean value:
- *       true  - When save is called, the resulting edit will be marked as "minor".
- *       false - When save is called, the resulting edit will not be marked as "minor". (default)
- *
- * setBotEdit(botEdit)
- *    botEdit is a boolean value:
- *       true  - When save is called, the resulting edit will be marked as "bot".
- *       false - When save is called, the resulting edit will not be marked as "bot". (default)
- *
- * setPageSection(pageSection)
- *    pageSection - integer specifying the section number to load or save. The default is |null|, which means
- *                  that the entire page will be retrieved.
- *
- * setMaxConflictRetries(maxRetries)
- *    maxRetries - number of retries for save errors involving an edit conflict or loss of edit token
- *    default: 2
- *
- * setMaxRetries(maxRetries)
- *    maxRetries - number of retries for save errors not involving an edit conflict or loss of edit token
- *    default: 2
+ * setPrependText(prependText) sets the text that will be prepended to the page when prepend() is called
  *
  * setCallbackParameters(callbackParameters)
  *    callbackParameters - an object for use in a callback function
@@ -1630,58 +1594,15 @@ Morebits.wiki.api.setApiUserAgent = function( ua ) {
  *
  * getStatusElement(): returns the Status element created by the constructor
  *
- * setFollowRedirect(followRedirect)
- *    followRedirect is a boolean value:
- *       true  - a maximum of one redirect will be followed.
- *               In the event of a redirect, a message is displayed to the user and
- *               the redirect target can be retrieved with getPageName().
- *       false - the requested pageName will be used without regard to any redirect. (default)
- *
- * setWatchlist(watchlistOption)
- *    watchlistOption is a boolean value:
- *       true  - page will be added to the user's watchlist when save() is called
- *       false - watchlist status of the page will not be changed (default)
- *
- * setWatchlistFromPreferences(watchlistOption)
- *    watchlistOption is a boolean value:
- *       true  - page watchlist status will be set based on the user's
- *               preference settings when save() is called
- *       false - watchlist status of the page will not be changed (default)
- *
- *    Watchlist notes:
- *       1. The MediaWiki API value of 'unwatch', which explicitly removes the page from the
- *          user's watchlist, is not used.
- *       2. If both setWatchlist() and setWatchlistFromPreferences() are called,
- *          the last call takes priority.
- *       3. Twinkle modules should use the appropriate preference to set the watchlist options.
- *       4. Most Twinkle modules use setWatchlist().
- *          setWatchlistFromPreferences() is only needed for the few Twinkle watchlist preferences
- *          that accept a string value of 'default'.
- *
- * setCreateOption(createOption)
- *    createOption is a string value:
- *       'recreate'   - create the page if it does not exist, or edit it if it exists
- *       'createonly' - create the page if it does not exist, but return an error if it
- *                      already exists
- *       'nocreate'   - don't create the page, only edit it if it already exists
- *       null         - create the page if it does not exist, unless it was deleted in the moment
- *                      between retrieve the edit token and saving the edit (default)
- *
  * exists(): returns true if the page existed on the wiki when it was last loaded
+ *
+ * getCurrentID(): returns a string containing the current revision ID of the page
  *
  * lookupCreator(onSuccess): Retrieves the username of the user who created the page
  *    onSuccess - callback function which is called when the username is found
  *                within the callback, the username can be retrieved using the getCreator() function
  *
  * getCreator(): returns the user who created the page following lookupCreator()
- *
- * getCurrentID(): returns a string containing the current revision ID of the page
- *
- * patrol(): marks the page as patrolled, if possible
- *
- * move(onSuccess, onFailure): Moves a page to another title
- *
- * deletePage(onSuccess, onFailure): Deletes a page (for admins only)
  *
  */
 
@@ -1713,6 +1634,12 @@ Morebits.wiki.api.setApiUserAgent = function( ua ) {
  *          significant duplication of code for little benefit.
  */
 
+ /**
+  * @constructor
+  * @param {string} pageName The name of the page, prefixed by the namespace (if any)
+  * For the current page, use mw.config.get('wgPageName')
+  * @param {string} [currentAction] A string describing the action about to be undertaken (optional)
+  */
 Morebits.wiki.page = function(pageName, currentAction) {
 
 	if (!currentAction) {
@@ -1726,13 +1653,14 @@ Morebits.wiki.page = function(pageName, currentAction) {
 	 * must be accessed via getter and setter functions.
 	 */
 	var ctx = {
-		 // backing fields for public properties
+		// backing fields for public properties
 		pageName: pageName,
 		pageExists: false,
 		editSummary: null,
 		callbackParameters: null,
 		statusElement: new Morebits.status(currentAction),
-		 // - edit
+
+		// - edit
 		pageText: null,
 		editMode: 'all',  // save() replaces entire contents of the page by default
 		appendText: null,   // can't reuse pageText for this because pageText is needed to follow a redirect
@@ -1746,21 +1674,26 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		followRedirect: false,
 		watchlistOption: 'nochange',
 		creator: null,
-		 // - revert
+
+		// - revert
 		revertOldID: null,
-		 // - move
+
+		// - move
 		moveDestination: null,
 		moveTalkPage: false,
 		moveSubpages: false,
 		moveSuppressRedirect: false,
-		 // - protect
+
+		// - protect
 		protectEdit: null,
 		protectMove: null,
 		protectCreate: null,
 		protectCascade: false,
-		 // - stabilize (FlaggedRevs)
+
+		// - stabilize (FlaggedRevs)
 		flaggedRevs: null,
-		 // internal status
+
+		// internal status
 		pageLoaded: false,
 		editToken: null,
 		loadTime: null,
@@ -1771,7 +1704,8 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		suppressProtectWarning: false,
 		conflictRetries: 0,
 		retries: 0,
-		 // callbacks
+
+		// callbacks
 		onLoadSuccess: null,
 		onLoadFailure: null,
 		onSaveSuccess: null,
@@ -1785,7 +1719,8 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		onProtectFailure: null,
 		onStabilizeSuccess: null,
 		onStabilizeFailure: null,
-		 // internal objects
+
+		// internal objects
 		loadQuery: null,
 		loadApi: null,
 		saveApi: null,
@@ -1803,155 +1738,10 @@ Morebits.wiki.page = function(pageName, currentAction) {
 	var emptyFunction = function() { };
 
 	/**
-	 * Public interface accessors
+	 * Loads the text for the page
+	 * @param {Function} onSuccess - callback function which is called when the load has succeeded
+	 * @param {Function} onFailure - callback function which is called when the load fails (optional)
 	 */
-	this.getPageName = function() {
-		return ctx.pageName;
-	};
-
-	this.getPageText = function() {
-		return ctx.pageText;
-	};
-
-	this.setPageText = function(pageText) {
-		ctx.editMode = 'all';
-		ctx.pageText = pageText;
-	};
-
-	this.setAppendText = function(appendText) {
-		ctx.editMode = 'append';
-		ctx.appendText = appendText;
-	};
-
-	this.setPrependText = function(prependText) {
-		ctx.editMode = 'prepend';
-		ctx.prependText = prependText;
-	};
-
-	this.setEditSummary = function(summary) {
-		ctx.editSummary = summary;
-	};
-
-	this.setCreateOption = function(createOption) {
-		ctx.createOption = createOption;
-	};
-
-	this.setMinorEdit = function(minorEdit) {
-		ctx.minorEdit = minorEdit;
-	};
-
-	this.setBotEdit = function(botEdit) {
-		ctx.botEdit = botEdit;
-	};
-
-	this.setPageSection = function(pageSection) {
-		ctx.pageSection = pageSection;
-	};
-
-	this.setMaxConflictRetries = function(maxRetries) {
-		ctx.maxConflictRetries = maxRetries;
-	};
-
-	this.setMaxRetries = function(maxRetries) {
-		ctx.maxRetries = maxRetries;
-	};
-
-	this.setCallbackParameters = function(callbackParameters) {
-		ctx.callbackParameters = callbackParameters;
-	};
-
-	this.getCallbackParameters = function() {
-		return ctx.callbackParameters;
-	};
-
-	this.getCreator = function() {
-		return ctx.creator;
-	};
-
-	this.setOldID = function(oldID) {
-		ctx.revertOldID = oldID;
-	};
-
-	this.getCurrentID = function() {
-		return ctx.revertCurID;
-	};
-
-	this.getRevisionUser = function() {
-		return ctx.revertUser;
-	};
-
-	this.setMoveDestination = function(destination) {
-		ctx.moveDestination = destination;
-	};
-
-	this.setMoveTalkPage = function(flag) {
-		ctx.moveTalkPage = !!flag;
-	};
-
-	this.setMoveSubpages = function(flag) {
-		ctx.moveSubpages = !!flag;
-	};
-
-	this.setMoveSuppressRedirect = function(flag) {
-		ctx.moveSuppressRedirect = !!flag;
-	};
-
-	this.setEditProtection = function(level, expiry) {
-		ctx.protectEdit = { level: level, expiry: expiry };
-	};
-
-	this.setMoveProtection = function(level, expiry) {
-		ctx.protectMove = { level: level, expiry: expiry };
-	};
-
-	this.setCreateProtection = function(level, expiry) {
-		ctx.protectCreate = { level: level, expiry: expiry };
-	};
-
-	this.setCascadingProtection = function(flag) {
-		ctx.protectCascade = !!flag;
-	};
-
-	this.setFlaggedRevs = function(level, expiry) {
-		ctx.flaggedRevs = { level: level, expiry: expiry };
-	};
-
-	this.getStatusElement = function() {
-		return ctx.statusElement;
-	};
-
-	this.setFollowRedirect = function(followRedirect) {
-		if (ctx.pageLoaded) {
-			ctx.statusElement.error("内部错误：不能在页面加载后修改重定向设置！");
-			return;
-		}
-		ctx.followRedirect = followRedirect;
-	};
-
-	this.setWatchlist = function(flag) {
-		if (flag) {
-			ctx.watchlistOption = 'watch';
-		} else {
-			ctx.watchlistOption = 'nochange';
-		}
-	};
-
-	this.setWatchlistFromPreferences = function(flag) {
-		if (flag) {
-			ctx.watchlistOption = 'preferences';
-		} else {
-			ctx.watchlistOption = 'nochange';
-		}
-	};
-
-	this.suppressProtectWarning = function() {
-		ctx.suppressProtectWarning = true;
-	};
-
-	this.exists = function() {
-		return ctx.pageExists;
-	};
-
 	this.load = function(onSuccess, onFailure) {
 		ctx.onLoadSuccess = onSuccess;
 		ctx.onLoadFailure = onFailure || emptyFunction;
@@ -1994,8 +1784,18 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		ctx.loadApi.post();
 	};
 
-	// Save updated .pageText to Wikipedia
-	// Only valid after successful .load()
+	/**
+	 * Saves the text for the page to Wikipedia
+	 * Must be preceded by successfully calling load().
+	 *
+	 * Warning: Calling save() can result in additional calls to the previous load() callbacks to
+	 *             recover from edit conflicts!
+	 *             In this case, callers must make the same edit to the new pageText and reinvoke save().
+	 *             This behavior can be disabled with setMaxConflictRetries(0).
+	 * @param {Function} onSuccess - callback function which is called when the save has succeeded (optional)
+	 * @param {Function} onFailure - callback function which is called when the save fails (optional)
+	 *
+	 */
 	this.save = function(onSuccess, onFailure) {
 		ctx.onSaveSuccess = onSuccess;
 		ctx.onSaveFailure = onFailure || emptyFunction;
@@ -2088,6 +1888,12 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		ctx.saveApi.post();
 	};
 
+	/**
+	 * Adds the text provided via setAppendText() to the end of the page.
+	 * Does not require calling load() first.
+	 * @param {Function} onSuccess - callback function which is called when the method has succeeded (optional)
+	 * @param {Function} onFailure - callback function which is called when the method fails (optional)
+	 */
 	this.append = function(onSuccess, onFailure) {
 		ctx.editMode = 'append';
 
@@ -2100,6 +1906,12 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		}
 	};
 
+	/**
+	 * Adds the text provided via setPrependText() to the start of the page.
+	 * Does not require calling load() first.
+	 * @param {Function}  onSuccess - callback function which is called when the method has succeeded (optional)
+	 * @param {Function}  onFailure - callback function which is called when the method fails (optional)
+	 */
 	this.prepend = function(onSuccess, onFailure) {
 		ctx.editMode = 'prepend';
 
@@ -2112,6 +1924,265 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		}
 	};
 
+	/**
+	 * @returns a string containing the name of the loaded page, including the namespace
+	 */
+	this.getPageName = function() {
+		return ctx.pageName;
+	};
+
+	/**
+	 * @returns a string containing the text of the page after a successful load()
+	 */
+	this.getPageText = function() {
+		return ctx.pageText;
+	};
+
+	/**
+	 * `pageText` - string containing the updated page text that will be saved when save() is called
+	 */
+	this.setPageText = function(pageText) {
+		ctx.editMode = 'all';
+		ctx.pageText = pageText;
+	};
+
+	/**
+	 * `appendText` - string containing the text that will be appended to the page when append() is called
+	 */
+	this.setAppendText = function(appendText) {
+		ctx.editMode = 'append';
+		ctx.appendText = appendText;
+	};
+
+	/**
+	 * `prependText` - string containing the text that will be prepended to the page when prepend() is called
+	 */
+	this.setPrependText = function(prependText) {
+		ctx.editMode = 'prepend';
+		ctx.prependText = prependText;
+	};
+
+
+
+	// Edit-related setter methods:
+	/**
+	 * `summary` - string containing the text of the edit summary that will be used when save() is called
+	 */
+	this.setEditSummary = function(summary) {
+		ctx.editSummary = summary;
+	};
+
+	/**
+	 *    `createOption` is a string value:
+	 *       'recreate'   - create the page if it does not exist, or edit it if it exists
+	 *       'createonly' - create the page if it does not exist, but return an error if it
+	 *                      already exists
+	 *       'nocreate'   - don't create the page, only edit it if it already exists
+	 *       null         - create the page if it does not exist, unless it was deleted in the moment
+	 *                      between retrieving the edit token and saving the edit (default)
+	 *
+	 */
+	this.setCreateOption = function(createOption) {
+		ctx.createOption = createOption;
+	};
+
+	/**
+	 * `minorEdit` - boolean value:
+	 * True  - When save is called, the resulting edit will be marked as "minor".
+	 * False - When save is called, the resulting edit will not be marked as "minor". (default)
+	 */
+	this.setMinorEdit = function(minorEdit) {
+		ctx.minorEdit = minorEdit;
+	};
+
+	/**
+	 * `botEdit` is a boolean value:
+	 *  True  - When save is called, the resulting edit will be marked as "bot".
+	 *  False - When save is called, the resulting edit will not be marked as "bot". (default)
+	 */
+	this.setBotEdit = function(botEdit) {
+		ctx.botEdit = botEdit;
+	};
+
+	/**
+	 * `pageSection` - integer specifying the section number to load or save.
+	 * The default is `null`, which means that the entire page will be retrieved.
+	 */
+	this.setPageSection = function(pageSection) {
+		ctx.pageSection = pageSection;
+	};
+
+	/**
+	 * `maxRetries` - number of retries for save errors involving an edit conflict or loss of edit token.Default: 2
+	 */
+	this.setMaxConflictRetries = function(maxRetries) {
+		ctx.maxConflictRetries = maxRetries;
+	};
+
+	/**
+	 * `maxRetries` - number of retries for save errors not involving an edit conflict or loss of edit token
+	 * Default: 2
+	 */
+	this.setMaxRetries = function(maxRetries) {
+		ctx.maxRetries = maxRetries;
+	};
+
+	/**
+	 *  `watchlistOption` is a boolean value:
+	 *       True  - page will be added to the user's watchlist when save() is called
+ 	 *       False - watchlist status of the page will not be changed (default)
+	 */
+	this.setWatchlist = function(watchlistOption) {
+		if (watchlistOption) {
+			ctx.watchlistOption = 'watch';
+		} else {
+			ctx.watchlistOption = 'nochange';
+		}
+	};
+
+	/**
+	 *    `watchlistOption` is a boolean value:
+	 *       True  - page watchlist status will be set based on the user's
+	 *               preference settings when save() is called
+	 *       False - watchlist status of the page will not be changed (default)
+	 *
+	 *    Watchlist notes:
+	 *       1. The MediaWiki API value of 'unwatch', which explicitly removes the page from the
+	 *          user's watchlist, is not used.
+	 *       2. If both setWatchlist() and setWatchlistFromPreferences() are called,
+	 *          the last call takes priority.
+	 *       3. Twinkle modules should use the appropriate preference to set the watchlist options.
+	 *       4. Most Twinkle modules use setWatchlist().
+	 *          setWatchlistFromPreferences() is only needed for the few Twinkle watchlist preferences
+	 *          that accept a string value of 'default'.
+	 */
+	this.setWatchlistFromPreferences = function(watchlistOption) {
+		if (watchlistOption) {
+			ctx.watchlistOption = 'preferences';
+		} else {
+			ctx.watchlistOption = 'nochange';
+		}
+	};
+
+	/**
+	 *    `followRedirect` is a boolean value:
+	 *       True  - a maximum of one redirect will be followed.
+	 *               In the event of a redirect, a message is displayed to the user and
+	 *               the redirect target can be retrieved with getPageName().
+	 *       False - the requested pageName will be used without regard to any redirect. (default)
+	 */
+	this.setFollowRedirect = function(followRedirect) {
+		if (ctx.pageLoaded) {
+			ctx.statusElement.error("Internal error: cannot change redirect setting after the page has been loaded!");
+			return;
+		}
+		ctx.followRedirect = followRedirect;
+	};
+
+	// Move-related setter functions
+	this.setMoveDestination = function(destination) {
+		ctx.moveDestination = destination;
+	};
+
+	this.setMoveTalkPage = function(flag) {
+		ctx.moveTalkPage = !!flag;
+	};
+
+	this.setMoveSubpages = function(flag) {
+		ctx.moveSubpages = !!flag;
+	};
+
+	this.setMoveSuppressRedirect = function(flag) {
+		ctx.moveSuppressRedirect = !!flag;
+	};
+
+	// Protect-related setter functions
+	this.setEditProtection = function(level, expiry) {
+		ctx.protectEdit = { level: level, expiry: expiry };
+	};
+
+	this.setMoveProtection = function(level, expiry) {
+		ctx.protectMove = { level: level, expiry: expiry };
+	};
+
+	this.setCreateProtection = function(level, expiry) {
+		ctx.protectCreate = { level: level, expiry: expiry };
+	};
+
+	this.setCascadingProtection = function(flag) {
+		ctx.protectCascade = !!flag;
+	};
+
+	// Revert-related getters/setters:
+	this.setOldID = function(oldID) {
+		ctx.revertOldID = oldID;
+	};
+
+	/**
+	 *  @returns a string containing the current revision ID of the page
+	 */
+	this.getCurrentID = function() {
+		return ctx.revertCurID;
+	};
+
+	this.getRevisionUser = function() {
+		return ctx.revertUser;
+	};
+
+	// Miscellaneous getters/setters:
+
+	/**
+	 * `callbackParameters` - an object for use in a callback function
+	 *
+	 * Callback notes: callbackParameters is for use by the caller only. The parameters
+	 * allow a caller to pass the proper context into its callback function.
+	 * Callers must ensure that any changes to the callbackParameters object
+	 * within a load() callback still permit a proper re-entry into the
+	 * load() callback if an edit conflict is detected upon calling save().
+	 */
+	this.setCallbackParameters = function(callbackParameters) {
+		ctx.callbackParameters = callbackParameters;
+	};
+
+	/**
+	 * @returns the object previous set by setCallbackParameters()
+	 */
+	this.getCallbackParameters = function() {
+		return ctx.callbackParameters;
+	};
+
+	/**
+	 * @returns the Status element created by the constructor
+	 */
+	this.getStatusElement = function() {
+		return ctx.statusElement;
+	};
+
+
+	this.setFlaggedRevs = function(level, expiry) {
+		ctx.flaggedRevs = { level: level, expiry: expiry };
+	};
+
+	/**
+	 * @returns true if the page existed on the wiki when it was last loaded
+	 */
+	this.exists = function() {
+		return ctx.pageExists;
+	};
+
+	/**
+	 * @returns the user who created the page following lookupCreator()
+	 */
+	this.getCreator = function() {
+		return ctx.creator;
+	};
+
+	/**
+	 * Retrieves the username of the user who created the page
+	 * @param {Function} onSuccess - callback function (required) which is
+	 * called when the username is found within the callback, the username
+	 * can be retrieved using the getCreator() function
+	 */
 	this.lookupCreator = function(onSuccess) {
 		if (!onSuccess) {
 			ctx.statusElement.error("内部错误：未给lookupCreator()提供onSuccess回调函数！");
@@ -2137,6 +2208,9 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		ctx.lookupCreatorApi.post();
 	};
 
+	/**
+	 * marks the page as patrolled, if possible
+	 */
 	this.patrol = function() {
 		// There's no patrol link on page, so we can't patrol
 		if ( !$( '.patrollink' ).length ) {
@@ -2162,6 +2236,11 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		}
 	};
 
+	/**
+	 * Reverts a page to revertOldID
+	 * @param {Function} onSuccess - callback function to run on success
+	 * @param {Function} onFailure - callback function to run on failure (optional)
+	 */
 	this.revert = function(onSuccess, onFailure) {
 		ctx.onSaveSuccess = onSuccess;
 		ctx.onSaveFailure = onFailure || emptyFunction;
@@ -2176,6 +2255,11 @@ Morebits.wiki.page = function(pageName, currentAction) {
 		this.load(fnAutoSave, ctx.onSaveFailure);
 	};
 
+	/**
+	 * Moves a page to another title
+	 * @param {Function} onSuccess - callback function to run on success
+	 * @param {Function} onFailure - callback function to run on failure (optional)
+	 */
 	this.move = function(onSuccess, onFailure) {
 		ctx.onMoveSuccess = onSuccess;
 		ctx.onMoveFailure = onFailure || emptyFunction;
@@ -2210,6 +2294,11 @@ Morebits.wiki.page = function(pageName, currentAction) {
 	};
 
 	// |delete| is a reserved word in some flavours of JS
+	/**
+	 * Deletes a page (for admins only)
+	 * @param {Function} onSuccess - callback function to run on success
+	 * @param {Function} onFailure - callback function to run on failure (optional)
+	 */
 	this.deletePage = function(onSuccess, onFailure) {
 		ctx.onDeleteSuccess = onSuccess;
 		ctx.onDeleteFailure = onFailure || emptyFunction;
@@ -2539,7 +2628,7 @@ Morebits.wiki.page = function(pageName, currentAction) {
 			};
 
 			var purgeApi = new Morebits.wiki.api("检测到编辑冲突，更新服务器缓存", purgeQuery, null, ctx.statusElement);
-			var result = purgeApi.post( { async: false } );  // just wait for it, result is for debugging
+			purgeApi.post( { async: false } );  // just wait for it, result is for debugging
 
 			--Morebits.wiki.numberOfActionsLeft;  // allow for normal completion if retry succeeds
 
@@ -2857,7 +2946,7 @@ Morebits.wiki.page = function(pageName, currentAction) {
 	};
 }; // end Morebits.wiki.page
 
-/** Morebits.wiki.page TODO: (XXX)
+/* Morebits.wiki.page TODO: (XXX)
  * - Should we retry loads also?
  * - Need to reset current action before the save?
  * - Deal with action.completed stuff
@@ -2870,26 +2959,26 @@ Morebits.wiki.page = function(pageName, currentAction) {
  * **************** Morebits.wiki.preview ****************
  * Uses the API to parse a fragment of wikitext and render it as HTML.
  *
- * Constructor: Morebits.wiki.preview(previewbox, currentAction)
- *    previewbox - the <div> element that will contain the rendered HTML
- *
- * beginRender(wikitext): Displays the preview box, and begins an asynchronous attempt
- *                        to render the specified wikitext.
- *    wikitext - wikitext to render; most things should work, including subst: and ~~~~
- *    pageTitle - optional parameter for the page this should be rendered as being on
- *
- * closePreview(): Hides the preview box and clears it.
- *
  * The suggested implementation pattern (in Morebits.simpleWindow + Morebits.quickForm situations) is to
  * construct a Morebits.wiki.preview object after rendering a Morebits.quickForm, and bind the object
  * to an arbitrary property of the form (e.g. |previewer|).  For an example, see
  * twinklewarn.js.
  */
 
+ /**
+  * @constructor
+  * @param {HTMLDivElement} previewbox - the <div> element that will contain the rendered HTML
+  */
 Morebits.wiki.preview = function(previewbox) {
 	this.previewbox = previewbox;
 	$(previewbox).addClass("morebits-previewbox").hide();
 
+	/**
+	 * Displays the preview box, and begins an asynchronous attempt
+	 * to render the specified wikitext.
+	 * @param {string} wikitext - wikitext to render; most things should work, including subst: and ~~~~
+	 * @param {string} [pageTitle] - optional parameter for the page this should be rendered as being on
+	 */
 	this.beginRender = function(wikitext, pageTitle) {
 		$(previewbox).show();
 
@@ -2916,9 +3005,12 @@ Morebits.wiki.preview = function(previewbox) {
 			return;
 		}
 		previewbox.innerHTML = html;
-		$(previewbox).find("a").attr("target", "_blank");
+		$(previewbox).find("a").attr("target", "_blank");	// this makes links open in new tab
 	};
 
+	/**
+	 * Hides the preview box and clears it.
+	 */
 	this.closePreview = function() {
 		$(previewbox).empty().hide();
 	};
@@ -2967,7 +3059,7 @@ Morebits.wikitext.template = {
 				continue;
 			}
 			if( test2 === ']]' ) {
-				current += test2;
+				current += ']]';
 				++i;
 				--level;
 				continue;
@@ -3025,19 +3117,40 @@ Morebits.wikitext.template = {
 	}
 };
 
+/**
+ * @param {string} text
+ */
 Morebits.wikitext.page = function mediawikiPage( text ) {
 	this.text = text;
 };
 
 Morebits.wikitext.page.prototype = {
 	text: '',
+
+	/**
+	 * Removes links to `link_target` from the page text.
+	 * @param {string} link_target
+	 */
 	removeLink: function( link_target ) {
 		var first_char = link_target.substr( 0, 1 );
 		var link_re_string = "[" + first_char.toUpperCase() + first_char.toLowerCase() + ']' + RegExp.escape( link_target.substr( 1 ), true );
-		var link_simple_re = new RegExp( "\\[\\[:?(" + link_re_string + ")\\]\\]", 'g' );
-		var link_named_re = new RegExp( "\\[\\[:?" + link_re_string + "\\|(.+?)\\]\\]", 'g' );
+
+		// Files and Categories become links with a leading colon.
+		// e.g. [[:File:Test.png]]
+		var special_ns_re = /^(?:[Ff]ile|[Ii]mage|[Cc]ategory):/;
+		var colon = special_ns_re.test( link_target ) ? ':' : '';
+
+		var link_simple_re = new RegExp( "\\[\\[" + colon + "(" + link_re_string + ")\\]\\]", 'g' );
+		var link_named_re = new RegExp( "\\[\\[" + colon + link_re_string + "\\|(.+?)\\]\\]", 'g' );
 		this.text = this.text.replace( link_simple_re, "$1" ).replace( link_named_re, "$1" );
 	},
+
+	/**
+	 * Comments out images from page text. If used in a gallery, deletes the whole line.
+	 * If used as a template argument (not necessarily with File: prefix), the template parameter is commented out.
+	 * @param {string} image - Image name without File: prefix
+	 * @param {string} reason - Reason to be included in comment, alongside the commented-out image
+	 */
 	commentOutImage: function( image, reason ) {
 		var unbinder = new Morebits.unbinder( this.text );
 		unbinder.unbind( '<!--', '-->' );
@@ -3046,10 +3159,8 @@ Morebits.wikitext.page.prototype = {
 		var first_char = image.substr( 0, 1 );
 		var image_re_string = "[" + first_char.toUpperCase() + first_char.toLowerCase() + ']' + RegExp.escape( image.substr( 1 ), true );
 
-		/*
-		 * Check for normal image links, i.e. [[Image:Foobar.png|...]]
-		 * Will eat the whole link
-		 */
+		// Check for normal image links, i.e. [[File:Foobar.png|...]]
+		// Will eat the whole link
 		var links_re = new RegExp( "\\[\\[(?:[Ii]mage|[Ff]ile|文件|檔案):\\s*" + image_re_string );
 		var allLinks = Morebits.array.uniq(Morebits.string.splitWeightedByKeys( unbinder.content, '[[', ']]' ));
 		for( var i = 0; i < allLinks.length; ++i ) {
@@ -3061,25 +3172,28 @@ Morebits.wikitext.page.prototype = {
 		// unbind the newly created comments
 		unbinder.unbind( '<!--', '-->' );
 
-		/*
-		 * Check for gallery images, i.e. instances that must start on a new line, eventually preceded with some space, and must include Image: prefix
-		 * Will eat the whole line.
-		 */
+		// Check for gallery images, i.e. instances that must start on a new line,
+		// eventually preceded with some space, and must include File: prefix
+		// Will eat the whole line.
 		var gallery_image_re = new RegExp( "(^\\s*(?:[Ii]mage|[Ff]ile|文件|檔案):\\s*" + image_re_string + ".*?$)", 'mg' );
 		unbinder.content = unbinder.content.replace( gallery_image_re, "<!-- " + reason + "$1 -->" );
 
 		// unbind the newly created comments
 		unbinder.unbind( '<!--', '-->' );
-		/*
-		 * Check free image usages, for example as template arguments, might have the Image: prefix excluded, but must be preceeded by an |
-		 * Will only eat the image name and the preceeding bar and an eventual named parameter
-		 */
+
+		// Check free image usages, for example as template arguments, might have the File: prefix excluded, but must be preceeded by an |
+		// Will only eat the image name and the preceeding bar and an eventual named parameter
 		var free_image_re = new RegExp( "(\\|\\s*(?:[\\w\\s]+\\=)?\\s*(?:(?:[Ii]mage|[Ff]ile|文件|檔案):\\s*)?" + image_re_string + ")", 'mg' );
 		unbinder.content = unbinder.content.replace( free_image_re, "<!-- " + reason + "$1 -->" );
-
 		// Rebind the content now, we are done!
 		this.text = unbinder.rebind();
 	},
+
+	/**
+	 * Converts first usage of [[File:`image`]] to [[File:`image`|`data`]]
+	 * @param {string} image - Image name without File: prefix
+	 * @param {string} data
+	 */
 	addToImageComment: function( image, data ) {
 		var first_char = image.substr( 0, 1 );
 		var first_char_regex = RegExp.escape( first_char, true );
@@ -3101,6 +3215,11 @@ Morebits.wikitext.page.prototype = {
 		var newtext = "$1|$2 " + data;
 		this.text = this.text.replace( gallery_re, newtext );
 	},
+
+	/**
+	 * Removes transclusions of template from page text
+	 * @param {string} template - Page name whose transclusions are to be removed, include namespace prefix only if not in template namespace
+	 */
 	removeTemplate: function( template ) {
 		var first_char = template.substr( 0, 1 );
 		var template_re_string = "(?:[Tt]emplate:|模板:)?\\s*[" + first_char.toUpperCase() + first_char.toLowerCase() + ']' + RegExp.escape( template.substr( 1 ), true );
@@ -3112,6 +3231,7 @@ Morebits.wikitext.page.prototype = {
 			}
 		}
 	},
+
 	getText: function() {
 		return this.text;
 	}
@@ -3219,7 +3339,7 @@ Morebits.queryString.create = function( arr ) {
 			continue;
 		}
 		var res;
-		if( $.isArray( arr[i] ) ){
+		if( Array.isArray( arr[i] ) ){
 			var v = [];
 			for(var j = 0; j < arr[i].length; ++j ) {
 				v[j] = encodeURIComponent( arr[i][j] );
@@ -3271,7 +3391,7 @@ Morebits.status.init = function( root ) {
 Morebits.status.root = null;
 
 Morebits.status.onError = function( handler ) {
-	if ( $.isFunction( handler ) ) {
+	if ( typeof handler === 'function' ) {
 		Morebits.status.errorEvent = handler;
 	} else {
 		throw "Morebits.status.onError：处理程序不是一个函数";
@@ -3299,7 +3419,7 @@ Morebits.status.prototype = {
 		}
 	},
 	codify: function( obj ) {
-		if ( ! $.isArray( obj ) ) {
+		if ( ! Array.isArray( obj ) ) {
 			obj = [ obj ];
 		}
 		var result;
@@ -3321,14 +3441,14 @@ Morebits.status.prototype = {
 			if (type === 'error') {
 				// hack to force the page not to reload when an error is output - see also Morebits.status() above
 				Morebits.wiki.numberOfActionsLeft = 1000;
+
 				// call error callback
 				if (Morebits.status.errorEvent) {
 					Morebits.status.errorEvent();
 				}
+
 				// also log error messages in the browser console
-				if (console && console.error) {
-					console.error(this.textRaw + ": " + status);
-				}
+				console.error(this.textRaw + ": " + status); // eslint-disable-line no-console
 			}
 		}
 		this.render();
@@ -3417,35 +3537,41 @@ Morebits.checkboxShiftClickSupport = function (jQuerySelector, jQueryContext) {
 	var lastCheckbox = null;
 
 	function clickHandler(event) {
-		var cb = this;
-		if (event.shiftKey && lastCheckbox!==null)
-		{
+		var thisCb = this;
+		if (event.shiftKey && lastCheckbox !== null) {
 			var cbs = $(jQuerySelector, jQueryContext); //can't cache them, obviously, if we want to support resorting
-			var index=-1, lastIndex=-1;
-			for (var i=0; i<cbs.length; i++)
-			{
-				if (cbs[i]==cb) { index=i; if (lastIndex>-1) break; }
-				if (cbs[i]==lastCheckbox) { lastIndex=i; if (index>-1) break; }
+			var index = -1, lastIndex = -1, i;
+			for (i = 0; i < cbs.length; i++) {
+				if (cbs[i] === thisCb) {
+					index = i;
+					if (lastIndex > -1)
+						break;
+				}
+				if (cbs[i] === lastCheckbox) {
+					lastIndex = i;
+					if (index > -1)
+						break;
+				}
 			}
-			if (index>-1 && lastIndex>-1)
-			{
+
+			if (index > -1 && lastIndex > -1) {
 				//inspired by wikibits
-				var endState = cb.checked;
+				var endState = thisCb.checked;
 				var start, finish;
-				if (index<lastIndex)
-				{
-					start = index+1;
+				if (index < lastIndex) {
+					start = index + 1;
 					finish = lastIndex;
-				}
-				else
-				{
+				} else {
 					start = lastIndex;
-					finish = index-1;
+					finish = index - 1;
 				}
-				for (var i=start; i<=finish; i++) cbs[i].checked = endState;
+
+				for (i = start; i <= finish; i++) {
+					cbs[i].checked = endState;
+				}
 			}
 		}
-		lastCheckbox = cb;
+		lastCheckbox = thisCb;
 		return true;
 	}
 
@@ -3662,20 +3788,20 @@ Morebits.simpleWindow = function SimpleWindow( width, height ) {
 			// the 20 pixels represents adjustment for the extra height of the jQuery dialog "chrome", compared
 			// to that of the old SimpleWindow
 			height: height + 20,
-			close: function(event, ui) {
+			close: function(event) {
 				// dialogs and their content can be destroyed once closed
 				$(event.target).dialog("destroy").remove();
 			},
-			resizeStart: function(event, ui) {
+			resizeStart: function() {
 				this.scrollbox = $(this).find(".morebits-scrollbox")[0];
 				if (this.scrollbox) {
 					this.scrollbox.style.maxHeight = "none";
 				}
 			},
-			resizeEnd: function(event, ui) {
+			resizeEnd: function() {
 				this.scrollbox = null;
 			},
-			resize: function(event, ui) {
+			resize: function() {
 				this.style.maxHeight = "";
 				if (this.scrollbox) {
 					this.scrollbox.style.width = "";
@@ -3713,7 +3839,7 @@ Morebits.simpleWindow.prototype = {
 	scriptName: null,
 
 	// Focuses the dialog. This might work, or on the contrary, it might not.
-	focus: function(event) {
+	focus: function() {
 		$(this.content).dialog("moveToTop");
 
 		return this;
@@ -3741,7 +3867,7 @@ Morebits.simpleWindow.prototype = {
 		var dialog = $(this.content).dialog("open");
 		if (window.setupTooltips && window.pg && window.pg.re && window.pg.re.diff) {  // tie in with NAVPOP
 			dialog.parent()[0].ranSetupTooltipsAlready = false;
-			setupTooltips(dialog.parent()[0]);
+			window.setupTooltips(dialog.parent()[0]);
 		}
 		this.setHeight( this.height );  // init height algorithm
 
@@ -3880,6 +4006,7 @@ Morebits.simpleWindow.setButtonsEnabled = function( enabled ) {
  */
 
 if ( typeof arguments === "undefined" ) {  // typeof is here for a reason...
+	/* global Morebits */
 	window.SimpleWindow = Morebits.simpleWindow;
 	window.QuickForm = Morebits.quickForm;
 	window.Wikipedia = Morebits.wiki;
@@ -3887,5 +4014,4 @@ if ( typeof arguments === "undefined" ) {  // typeof is here for a reason...
 	window.QueryString = Morebits.queryString;
 }
 
-
-// </nowiki>
+//</nowiki>

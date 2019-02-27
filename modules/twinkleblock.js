@@ -77,7 +77,7 @@ Twinkle.block.callback = function twinkleblockCallback() {
 	result.root = result;
 
 	Twinkle.block.fetchUserInfo(function() {
-		// clean up preset data (defaults, etc.), done exactly once, must be before Twinkle.block.callback.change_action is called
+		// clean up preset data (defaults, etc.), done exactly once, must be before Twinkle.block.callback.change_action is called
 		Twinkle.block.transformBlockPresets();
 
 		// init the controls after user and block info have been fetched
@@ -426,6 +426,7 @@ Twinkle.block.blockPresetsInfo = {
 		forAnonOnly: true,
 		nocreate: true,
 		nonstandard: true,
+		hardblock: true,
 		reason: '{{blocked proxy}}',
 		sig: null
 	},
@@ -665,7 +666,7 @@ Twinkle.block.callback.change_expiry = function twinkleblockCallbackChangeExpiry
 };
 
 Twinkle.block.seeAlsos = [];
-Twinkle.block.callback.toggle_see_alsos = function twinkleblockCallbackToggleSeeAlso(e) {
+Twinkle.block.callback.toggle_see_alsos = function twinkleblockCallbackToggleSeeAlso() {
 	var reason = this.form.reason.value.replace(
 		new RegExp('( <!--|;) ' + 'see also ' + Twinkle.block.seeAlsos.join(' and ') + '( -->)?'), ''
 	);
@@ -826,7 +827,7 @@ Twinkle.block.callback.evaluate = function twinkleblockCallbackEvaluate(e) {
 		api.getToken('block').then(function(token) {
 			statusElement.status('处理中…');
 			blockoptions.token = token;
-			var mbApi = new Morebits.wiki.api( '执行封禁', blockoptions, function(data) {
+			var mbApi = new Morebits.wiki.api( '执行封禁', blockoptions, function() {
 				statusElement.info('完成');
 				if (toWarn) Twinkle.block.callback.issue_template(templateoptions);
 			});
@@ -940,7 +941,7 @@ Twinkle.block.callback.main = function twinkleblockcallbackMain( pageobj ) {
 	var templateName = messageData.templateName || messageData.template || messageData.value;
 	var summary = '{{' + templateName + '}}: ' + params.reason;
 	if ( messageData.suppressArticleInSummary !== true && params.article ) {
-		summary += '，于[[' + params.article + ']]';
+		summary += '，于[[:' + params.article + ']]';
 	}
 	summary += Twinkle.getPref('summaryAd');
 
@@ -951,5 +952,6 @@ Twinkle.block.callback.main = function twinkleblockcallbackMain( pageobj ) {
 };
 
 })(jQuery);
+
 
 //</nowiki>

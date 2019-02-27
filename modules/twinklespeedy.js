@@ -466,7 +466,7 @@ Twinkle.speedy.generateCsdList = function twinklespeedyGenerateCsdList(list, mod
 		}
 
 		if (criterion.subgroup && !hasSubmitButton) {
-			if ($.isArray(criterion.subgroup)) {
+			if (Array.isArray(criterion.subgroup)) {
 				criterion.subgroup.push({
 					type: 'button',
 					name: 'submit',
@@ -1159,7 +1159,7 @@ Twinkle.speedy.callbacks = {
 			}
 
 			// Remove tags that become superfluous with this action
-			text = text.replace(/\{\{\s*([Nn]ew unreviewed article|[Uu]nreviewed|[Uu]serspace draft)\s*(\|(?:\{\{[^{}]*\}\}|[^{}])*)?\}\}\s*/g, "");
+			text = text.replace(/\{\{\s*([Uu]serspace draft)\s*(\|(?:\{\{[^{}]*\}\}|[^{}])*)?\}\}\s*/g, "");
 			if (mw.config.get('wgNamespaceNumber') === 6) {
 				// remove "move to Commons" tag - deletion-tagged files cannot be moved to Commons
 				text = text.replace(/\{\{(mtc|(copy |move )?to ?commons|move to wikimedia commons|copy to wikimedia commons)[^}]*\}\}/gi, "");
@@ -1198,11 +1198,13 @@ Twinkle.speedy.callbacks = {
 					// disallow warning yourself
 					if (initialContrib === mw.config.get('wgUserName')) {
 						Morebits.status.warn("您（" + initialContrib + "）创建了该页，跳过通知");
+						initialContrib = null;
 
 					// don't notify users when their user talk page is nominated
 					} else if (initialContrib === mw.config.get('wgTitle') && mw.config.get('wgNamespaceNumber') === 3) {
 						Morebits.status.warn("通知页面创建者：用户创建了自己的对话页");
-
+						initialContrib = null;
+						
 					} else {
 						var usertalkpage = new Morebits.wiki.page('User talk:' + initialContrib, "通知页面创建者（" + initialContrib + "）"),
 							notifytext, i;
@@ -1211,10 +1213,10 @@ Twinkle.speedy.callbacks = {
 						notifytext += (params.welcomeuser ? "" : "|nowelcome=yes") + "}}--~~~~";
 
 						var editsummary = "通知：";
-						if (params.normalizeds.indexOf("g12") === -1) {  // no article name in summary for G10 deletions
-							editsummary += "页面[[" + Morebits.pageNameNorm + "]]";
+						if (params.normalizeds.indexOf("g12") === -1) {  // no article name in summary for G12 deletions
+							editsummary += "页面[[:" + Morebits.pageNameNorm + "]]";
 						} else {
-							editsummary += "一攻击性页面";
+							editsummary += "某攻击性页面";
 						}
 						editsummary += "快速删除提名";
 
@@ -1274,10 +1276,20 @@ Twinkle.speedy.callbacks = {
 				appendText += "\n\n=== " + date.getUTCFullYear() + "年" + (date.getUTCMonth() + 1) + "月 ===";
 			}
 
-			appendText += "\n# [[:" + Morebits.pageNameNorm + "]]: ";
+			var editsummary = "记录对";
+			appendText += "\n# [[:" + Morebits.pageNameNorm;
+
 			if (params.fromDI) {
-				appendText += "图版[[WP:CSD#" + params.normalized.toUpperCase() + "|CSD " + params.normalized.toUpperCase() + "]]（{{tl|" + params.templatename + "}}）";
+				appendText += "]]: 图版[[WP:CSD#" + params.normalized.toUpperCase() + "|CSD " + params.normalized.toUpperCase() + "]]（{{tl|" + params.templatename + "}}）";
+				editsummary += "[[:" + Morebits.pageNameNorm + "]]";
 			} else {
+				if (params.normalizeds.indexOf("g12") === -1) {  // no article name in log for G12 taggings
+					appendText += "]]：";
+					editsummary += "[[:" + Morebits.pageNameNorm + "]]";
+				} else {
+					appendText += "|这个]]攻击性页面：";
+					editsummary += "某攻击性页面";
+				}
 				if (params.normalizeds.length > 1) {
 					appendText += "多个理由（";
 					$.each(params.normalizeds, function(index, norm) {
@@ -1296,9 +1308,10 @@ Twinkle.speedy.callbacks = {
 				appendText += "；通知{{user|" + params.logInitialContrib + "}}";
 			}
 			appendText += " ~~~~~\n";
+			editsummary += "的快速删除提名";
 
 			pageobj.setAppendText(appendText);
-			pageobj.setEditSummary("记录对[[" + Morebits.pageNameNorm + "]]的快速删除提名" + Twinkle.getPref('summaryAd'));
+			pageobj.setEditSummary(editsummary + Twinkle.getPref('summaryAd'));
 			pageobj.setCreateOption("recreate");
 			pageobj.append();
 		}

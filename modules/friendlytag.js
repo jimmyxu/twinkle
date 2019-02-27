@@ -21,7 +21,7 @@ Twinkle.tag = function friendlytag() {
 		Twinkle.tag.mode = '重定向';
 		Twinkle.addPortletLink( Twinkle.tag.callback, "标记", "friendly-tag", "标记重定向" );
 	}
-	// article/draft tagging
+	// article/draft article tagging
 	else if( ( ( mw.config.get('wgNamespaceNumber') === 0 || mw.config.get('wgNamespaceNumber') === 118 ) && mw.config.get('wgCurRevisionId') ) || ( Morebits.pageNameNorm === 'Wikipedia:沙盒' ) ) {
 		Twinkle.tag.mode = '条目';
 		Twinkle.addPortletLink( Twinkle.tag.callback, "标记", "friendly-tag", "标记条目" );
@@ -224,7 +224,7 @@ Twinkle.tag.updateSortOrder = function(e) {
 		$.each(Twinkle.tag.article.tagCategories, function(title, content) {
 			container.append({ type: "header", id: "tagHeader" + i, label: title });
 			var subdiv = container.append({ type: "div", id: "tagSubdiv" + i++ });
-			if ($.isArray(content)) {
+			if (Array.isArray(content)) {
 				doCategoryCheckboxes(subdiv, content);
 			} else {
 				$.each(content, function(subtitle, subcontent) {
@@ -267,8 +267,11 @@ Twinkle.tag.updateSortOrder = function(e) {
 		var $checkbox = $(checkbox);
 		var link = Morebits.htmlNode("a", ">");
 		link.setAttribute("class", "tag-template-link");
-		link.setAttribute("href", mw.util.getUrl("Template:" +
-			Morebits.string.toUpperCaseFirstChar(checkbox.values)));
+		var linkto = Morebits.string.toUpperCaseFirstChar(checkbox.values);
+		link.setAttribute("href", mw.util.getUrl(
+			(linkto.indexOf(":") === -1 ? "Template:" : "") +
+			(linkto.indexOf("|") === -1 ? linkto : linkto.slice(0,linkto.indexOf("|")))
+		));
 		link.setAttribute("target", "_blank");
 		$checkbox.parent().append(["\u00A0", link]);
 	});
@@ -595,11 +598,11 @@ Twinkle.tag.multipleIssuesExceptions = [
 Twinkle.tag.callbacks = {
 	main: function( pageobj ) {
 		var params = pageobj.getCallbackParameters(),
-		    tagRe, tagText = '', summaryText = '添加',
-		    tags = [], groupableTags = [], i, totalTags;
+			tagRe, tagText = '', summaryText = '添加',
+			tags = [], groupableTags = [], i, totalTags;
 
 		// Remove tags that become superfluous with this action
-		var pageText = pageobj.getPageText().replace(/\{\{\s*([Nn]ew unreviewed article|[Uu]nreviewed|[Uu]serspace draft)\s*(\|(?:\{\{[^{}]*\}\}|[^{}])*)?\}\}\s*/g, "");
+		var pageText = pageobj.getPageText().replace(/\{\{\s*([Uu]serspace draft)\s*(\|(?:\{\{[^{}]*\}\}|[^{}])*)?\}\}\s*/g, "");
 
 		var addTag = function friendlytagAddTag( tagIndex, tagName ) {
 			var currentTag = "";
@@ -653,8 +656,20 @@ Twinkle.tag.callbacks = {
 				}
 			}
 
-			summaryText += '{{[[';
-			summaryText += (tagName.indexOf(":") !== -1 ? tagName : ("T:" + tagName + "|" + tagName));
+			summaryText += '{{[[:';
+			if( tagName.indexOf("|") !== -1 ) {
+				//if it is a custom tag with a parameter
+				var slicedTagName = tagName.slice(0,tagName.indexOf("|"));
+				if( tagName.indexOf(":") !== -1 ) {
+					summaryText += slicedTagName;
+				} else {
+					summaryText += "Template:" + slicedTagName + "|" + slicedTagName;
+				}
+			} else if( tagName.indexOf(":") !== -1 ) {
+				summaryText += tagName;
+			} else {
+				summaryText += "Template:" + tagName + "|" + tagName;
+			}
 			summaryText += ']]}}';
 		};
 
@@ -763,7 +778,7 @@ Twinkle.tag.callbacks = {
 
 		// avoid truncated summaries
 		if (summaryText.length > (254 - Twinkle.getPref('summaryAd').length)) {
-			summaryText = summaryText.replace(/\[\[[^\|]+\|([^\]]+)\]\]/g, "$1");
+			summaryText = summaryText.replace(/\[\[[^|]+\|([^\]]+)\]\]/g, "$1");
 		}
 
 		pageobj.setPageText(pageText);
@@ -780,8 +795,8 @@ Twinkle.tag.callbacks = {
 
 				var talkpage = new Morebits.wiki.page("Talk:" + params.discussArticle, "将理由贴进讨论页");
 				talkpage.setAppendText(talkpageText);
-				talkpage.setEditSummary('请求将[[' + params.nonDiscussArticle + ']]' +
-					'与' + '[[' + params.discussArticle + ']]合并' +
+				talkpage.setEditSummary('请求将[[:' + params.nonDiscussArticle + ']]' +
+					'与' + '[[:' + params.discussArticle + ']]合并' +
 					Twinkle.getPref('summaryAd'));
 				talkpage.setWatchlist(Twinkle.getFriendlyPref('watchMergeDiscussions'));
 				talkpage.setCreateOption('recreate');

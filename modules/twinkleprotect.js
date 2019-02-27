@@ -1070,10 +1070,10 @@ Twinkle.protect.callbacks = {
 		if( params.tag === 'none' ) {
 			summary = '移除保护模板' + Twinkle.getPref('summaryAd');
 		} else {
-			if( params.noinclude ) {
-				text = "<noinclude>{{" + tag + "}}</noinclude>" + text;
-			} else if( Morebits.wiki.isPageRedirect() ) {
+			if( Morebits.wiki.isPageRedirect() ) {
 				text = text + "\n{{" + tag + "}}";
+			} else if( params.noinclude ) {
+				text = "<noinclude>{{" + tag + "}}</noinclude>" + text;
 			} else {
 				text = "{{" + tag + "}}\n" + text;
 			}
@@ -1093,7 +1093,7 @@ Twinkle.protect.callbacks = {
 		var text = rppPage.getPageText();
 		var statusElement = rppPage.getStatusElement();
 
-		var rppRe = new RegExp( '===\\s*(\\[\\[)?\s*:?\s*' + RegExp.escape( Morebits.pageNameNorm, true ) + '\s*(\\]\\])?\\s*===', 'm' );
+		var rppRe = new RegExp( '===\\s*(\\[\\[)?\\s*:?\\s*' + RegExp.escape( Morebits.pageNameNorm, true ) + '\\s*(\\]\\])?\\s*===', 'm' );
 		var tag = rppRe.exec( text );
 
 		var rppLink = document.createElement('a');
@@ -1145,11 +1145,11 @@ Twinkle.protect.callbacks = {
 			var linknode = document.createElement('a');
 			linknode.setAttribute("href", mw.util.getUrl("Wikipedia:Twinkle/修复RFPP") );
 			linknode.appendChild(document.createTextNode('如何修复RFPP'));
-			statusElement.error( [ '无法在WP:RFPP上找到相关位点标记，要修复此问题，请参见', linknode, '。' ] );
+			statusElement.error( [ '无法在WP:RFPP上找到加入位置标记，要修复此问题，请参见', linknode, '。' ] );
 			return;
 		}
 		statusElement.status( '添加新提名…' );
-		rppPage.setEditSummary( '请求对[[' + Morebits.pageNameNorm + ']]' + params.typename + Twinkle.getPref('summaryAd') );
+		rppPage.setEditSummary( '请求对[[:' + Morebits.pageNameNorm + ']]' + params.typename + Twinkle.getPref('summaryAd') );
 		rppPage.setPageText( text );
 		rppPage.setCreateOption( 'recreate' );
 		rppPage.save();

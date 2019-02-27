@@ -1080,7 +1080,7 @@ Twinkle.config.init = function twinkleconfigInit() {
 
 		// since all the section headers exist now, we can try going to the requested anchor
 		if (location.hash) {
-			location.hash = location.hash;
+			window.location.hash = location.hash;
 		}
 
 	} else if (mw.config.get("wgNamespaceNumber") === mw.config.get("wgNamespaceIds").user &&
@@ -1243,7 +1243,7 @@ Twinkle.config.listDialog.display = function twinkleconfigListDialogDisplay(e) {
 	var addButton = document.createElement("button");
 	addButton.style.minWidth = "8em";
 	addButton.setAttribute("type", "button");
-	addButton.addEventListener("click", function(e) {
+	addButton.addEventListener("click", function() {
 		Twinkle.config.listDialog.addRow(dlgtbody);
 	}, false);
 	addButton.textContent = "添加";
@@ -1258,7 +1258,7 @@ Twinkle.config.listDialog.display = function twinkleconfigListDialogDisplay(e) {
 	// buttonpane buttons: [Save changes] [Reset] [Cancel]
 	var button = document.createElement("button");
 	button.setAttribute("type", "submit");  // so Morebits.simpleWindow puts the button in the button pane
-	button.addEventListener("click", function(e) {
+	button.addEventListener("click", function() {
 		Twinkle.config.listDialog.save($prefbutton, dlgtbody);
 		dialog.close();
 	}, false);
@@ -1266,14 +1266,14 @@ Twinkle.config.listDialog.display = function twinkleconfigListDialogDisplay(e) {
 	dialogcontent.appendChild(button);
 	button = document.createElement("button");
 	button.setAttribute("type", "submit");  // so Morebits.simpleWindow puts the button in the button pane
-	button.addEventListener("click", function(e) {
+	button.addEventListener("click", function() {
 		Twinkle.config.listDialog.reset($prefbutton, dlgtbody);
 	}, false);
 	button.textContent = "复位";
 	dialogcontent.appendChild(button);
 	button = document.createElement("button");
 	button.setAttribute("type", "submit");  // so Morebits.simpleWindow puts the button in the button pane
-	button.addEventListener("click", function(e) {
+	button.addEventListener("click", function() {
 		dialog.close();  // the event parameter on this function seems to be broken
 	}, false);
 	button.textContent = "取消";
@@ -1367,7 +1367,7 @@ Twinkle.config.resetPref = function twinkleconfigResetPref(pref, inFriendlyConfi
 			break;
 
 		case "set":
-			$.each(pref.setValues, function(itemkey, itemvalue) {
+			$.each(pref.setValues, function(itemkey) {
 				if (document.getElementById(pref.name + "_" + itemkey)) {
 					document.getElementById(pref.name + "_" + itemkey).checked = ((inFriendlyConfig ?
 						Twinkle.defaultConfig.friendly[pref.name] : Twinkle.defaultConfig.twinkle[pref.name]).indexOf(itemkey) !== -1);
@@ -1415,94 +1415,8 @@ Twinkle.config.save = function twinkleconfigSave(e) {
 	return false;
 };
 
-// The JSON stringify method in the following code was excerpted from
-// http://www.JSON.org/json2.js
-// version of 2011-02-23
-
-// Douglas Crockford, the code's author, has released it into the Public Domain.
-// See http://www.JSON.org/js.html
-
-var JSON;
-if (!JSON) {
-	JSON = {};
-}
-
-(function() {
-	var escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-		gap,
-		indent = '  ',  // hardcoded indent
-		meta = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', '\\': '\\\\' };
-
-	function quote(string) {
-		escapable.lastIndex = 0;
-		return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
-			var c = meta[a];
-			return typeof c === 'string' ? c :	'\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-		}) + '"' : '"' + string + '"';
-	}
-
-	function str(key, holder) {
-		var i, k, v, length, mind = gap, partial, value = holder[key];
-
-		if (value && typeof value === 'object' && $.isFunction(value.toJSON)) {
-			value = value.toJSON(key);
-		}
-
-		switch (typeof value) {
-		case 'string':
-			return quote(value);
-		case 'number':
-			return isFinite(value) ? String(value) : 'null';
-		case 'boolean':
-		case 'null':
-			return String(value);
-		case 'object':
-			if (!value) {
-				return 'null';
-			}
-			gap += indent;
-			partial = [];
-			if ($.isArray(value)) {
-				length = value.length;
-				for (i = 0; i < length; ++i) {
-					partial[i] = str(i, value) || 'null';
-				}
-				v = partial.length === 0 ? '[]' : gap ?
-					'[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']' :
-					'[' + partial.join(',') + ']';
-				gap = mind;
-				return v;
-			}
-			for (k in value) {
-				if (Object.prototype.hasOwnProperty.call(value, k)) {
-					v = str(k, value);
-					if (v) {
-						partial.push(quote(k) + (gap ? ': ' : ':') + v);
-					}
-				}
-			}
-			v = partial.length === 0 ? '{}' : gap ?
-				'{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}' :
-				'{' + partial.join(',') + '}';
-			gap = mind;
-			return v;
-		default:
-			throw new Error( "JSON.stringify: unknown data type" );
-		}
-	}
-
-	if (!$.isFunction(JSON.stringify)) {
-		JSON.stringify = function (value, ignoredParam1, ignoredParam2) {
-			ignoredParam1 = ignoredParam2;  // boredom
-			gap = '';
-			return str('', {'': value});
-		};
-	}
-}());
-
 Twinkle.config.writePrefs = function twinkleconfigWritePrefs(pageobj) {
 	var form = pageobj.getCallbackParameters();
-	var statelem = pageobj.getStatusElement();
 
 	// this is the object which gets serialized into JSON
 	var newConfig = {
@@ -1522,7 +1436,7 @@ Twinkle.config.writePrefs = function twinkleconfigWritePrefs(pageobj) {
 	// and it is not very robust: e.g. compare([2], ["2"]) === true, and
 	// compare({}, {}) === false, but it's good enough for our purposes here
 	var compare = function(a, b) {
-		if ($.isArray(a)) {
+		if (Array.isArray(a)) {
 			if (a.length !== b.length) {
 				return false;
 			}
@@ -1583,7 +1497,7 @@ Twinkle.config.writePrefs = function twinkleconfigWritePrefs(pageobj) {
 							});
 						} else {
 							// read all the keys in the list of values
-							$.each(pref.setValues, function(itemkey, itemvalue) {
+							$.each(pref.setValues, function(itemkey) {
 								if (form[pref.name + "_" + itemkey].checked) {
 									userValue.push(itemkey);
 								}
@@ -1648,7 +1562,7 @@ Twinkle.config.writePrefs = function twinkleconfigWritePrefs(pageobj) {
 		"// twinkleoptions.js到此为止\n";
 
 	pageobj.setPageText(text);
-	pageobj.setEditSummary("保存Twinkle参数设置：来自[[" + Morebits.pageNameNorm + "]]的自动编辑。 ([[WP:TW|TW]])");
+	pageobj.setEditSummary("保存Twinkle参数设置：来自[[:" + Morebits.pageNameNorm + "]]的自动编辑。 ([[WP:TW|TW]])");
 	pageobj.setCreateOption("recreate");
 	pageobj.save(Twinkle.config.saveSuccess);
 };

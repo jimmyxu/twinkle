@@ -51,16 +51,18 @@ Twinkle.xfd.callback = function twinklexfdCallback() {
 			label: '提交类型：',
 			event: Twinkle.xfd.callback.change_category
 		} );
+	var namespace = mw.config.get('wgNamespaceNumber');
+	
 	categories.append( {
 			type: 'option',
 			label: '页面存废讨论',
-			selected: mw.config.get('wgNamespaceNumber') === 0,  // Main namespace
+			selected: namespace === 0,  // Main namespace
 			value: 'afd'
 		} );
 	categories.append( {
 			type: 'option',
 			label: '文件存废讨论',
-			selected: mw.config.get('wgNamespaceNumber') === 6,  // File namespace
+			selected: namespace === 6,  // File namespace
 			value: 'ffd'
 		} );
 	form.append( {
@@ -291,7 +293,7 @@ Twinkle.xfd.callbacks = {
 			}
 
 			// Then, test if there are speedy deletion-related templates on the article.
-			var textNoSd = text.replace(/\{\{\s*(db(-\w*)?|d|delete|(?:hang|hold)[\- ]?on)\s*(\|(?:\{\{[^{}]*\}\}|[^{}])*)?\}\}\s*/ig, "");
+			var textNoSd = text.replace(/\{\{\s*(db(-\w*)?|d|delete|(?:hang|hold)[- ]?on)\s*(\|(?:\{\{[^{}]*\}\}|[^{}])*)?\}\}\s*/ig, "");
 			if (text !== textNoSd && confirm("在页面上找到快速删除模板，要移除吗？")) {
 				text = textNoSd;
 			}
@@ -302,7 +304,7 @@ Twinkle.xfd.callbacks = {
 			}
 
 			pageobj.setPageText(tag + text);
-			pageobj.setEditSummary("页面存废讨论：[[" + params.logpage + "#" + Morebits.pageNameNorm + "]]" + Twinkle.getPref('summaryAd'));
+			pageobj.setEditSummary("页面存废讨论：[[:" + params.logpage + "#" + Morebits.pageNameNorm + "]]" + Twinkle.getPref('summaryAd'));
 			switch (Twinkle.getPref('xfdWatchPage')) {
 				case 'yes':
 					pageobj.setWatchlist(true);
@@ -346,7 +348,7 @@ Twinkle.xfd.callbacks = {
 			}
 
 			pageobj.setAppendText("\n{{subst:DRItem|Type=" + type + "|DRarticles=" + Morebits.pageNameNorm + "|Reason=" + Morebits.string.formatReasonText(params.reason) + "|To=" + to + "}}~~~~");
-			pageobj.setEditSummary("添加[[" + Morebits.pageNameNorm + "]]" + Twinkle.getPref('summaryAd'));
+			pageobj.setEditSummary("添加[[:" + Morebits.pageNameNorm + "]]" + Twinkle.getPref('summaryAd'));
 			switch (Twinkle.getPref('xfdWatchDiscussion')) {
 				case 'yes':
 					pageobj.setWatchlist(true);
@@ -409,7 +411,7 @@ Twinkle.xfd.callbacks = {
 			var text = pageobj.getPageText();
 			var params = pageobj.getCallbackParameters();
 			pageobj.setPageText("{{ifd|" + Morebits.string.formatReasonText(params.reason) + "|date={{subst:#time:c}}}}\n" + text);
-			pageobj.setEditSummary("文件存废讨论：[[" + params.logpage + "#" + Morebits.pageNameNorm + "]]" + Twinkle.getPref('summaryAd'));
+			pageobj.setEditSummary("文件存废讨论：[[:" + params.logpage + "#" + Morebits.pageNameNorm + "]]" + Twinkle.getPref('summaryAd'));
 			switch (Twinkle.getPref('xfdWatchPage')) {
 				case 'yes':
 					pageobj.setWatchlist(true);

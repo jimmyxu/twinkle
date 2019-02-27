@@ -20,7 +20,7 @@ Twinkle.arv = function twinklearv() {
 		return;
 	}
 
-	var title = Morebits.isIPAddress( username ) ? '报告IP给管理员' : '报告用户给管理员';
+	var title = mw.util.isIPAddress( username ) ? '报告IP给管理员' : '报告用户给管理员';
 
 	Twinkle.addPortletLink( function(){ Twinkle.arv.callback(username); }, "告状", "tw-arv", title );
 };
@@ -156,7 +156,7 @@ Twinkle.arv.callback.changeCategory = function (e) {
 					{
 						label: '显而易见的纯破坏用户',
 						value: 'vandalonly',
-						disabled: Morebits.isIPAddress( root.uid.value )
+						disabled: mw.util.isIPAddress( root.uid.value )
 					},
 					{
 						label: '显而易见的spambot或失窃账户',
@@ -352,7 +352,7 @@ Twinkle.arv.callback.changeCategory = function (e) {
 						$entry.append('<span>"'+rev.parsedcomment+'" at <a href="'+mw.config.get('wgScript')+'?diff='+rev.revid+'">'+moment(rev.timestamp).calendar()+'</a></span>').appendTo($diffs);
 					}
 				}).fail(function(data){
-					console.log( 'API failed :(', data );
+					console.log( 'API failed :(', data ); // eslint-disable-line no-console
 				});
 				var $warnings = $(root).find('[name=warnings]');
 				$warnings.find('.entry').remove();
@@ -389,7 +389,7 @@ Twinkle.arv.callback.changeCategory = function (e) {
 						$entry.append('<span>"'+rev.parsedcomment+'" at <a href="'+mw.config.get('wgScript')+'?diff='+rev.revid+'">'+moment(rev.timestamp).calendar()+'</a></span>').appendTo($warnings);
 					}
 				}).fail(function(data){
-					console.log( 'API failed :(', data );
+					console.log( 'API failed :(', data ); // eslint-disable-line no-console
 				});
 
 				var $resolves = $(root).find('[name=resolves]');
@@ -447,7 +447,7 @@ Twinkle.arv.callback.changeCategory = function (e) {
 					$free_entry.append($free_label).append($free_input).appendTo($resolves);
 
 				}).fail(function(data){
-					console.log( 'API failed :(', data );
+					console.log( 'API failed :(', data ); // eslint-disable-line no-console
 				});
 			}
 		} );
@@ -633,10 +633,11 @@ Twinkle.arv.callback.evaluate = function(e) {
 
 			var puppetReport = form.category.value === "puppet";
 			if (puppetReport && !(form.sockmaster.value.trim())) {
-				if (!confirm("您未对这个傀儡账户输入主账户，您是否希望报告这个账户为傀儡操作者？")) {
-					return;
-				}
-				puppetReport = false;
+				alert("您未对这个傀儡账户输入主账户，请考虑报告此账户为傀儡操作者。");
+				return;
+			} else if (!puppetReport && !(form.sockpuppet[0].value.trim())) {
+				alert("您未对这个傀儡操作者输入任何傀儡，请考虑报告此账户为傀儡。");
+				return;
 			}
 
 			sockParameters.uid = puppetReport ? form.sockmaster.value.trim() : uid;
@@ -698,7 +699,7 @@ Twinkle.arv.callback.evaluate = function(e) {
 					var page = data.query.pages[pageid];
 					an3_next(page);
 				}).fail(function(data){
-					console.log( 'API failed :(', data );
+					console.log( 'API failed :(', data ); // eslint-disable-line no-console
 				});
 			} else {
 				an3_next();
@@ -827,7 +828,7 @@ Twinkle.arv.processAN3 = function( params ) {
 			grouped_diffs[lastid].push(cur);
 		}
 
-		var difftext = $.map(grouped_diffs, function(sub, index){
+		var difftext = $.map(grouped_diffs, function(sub) {
 			var ret = "";
 			if(sub.length >= 2) {
 				var last = sub[0];
@@ -884,7 +885,7 @@ Twinkle.arv.processAN3 = function( params ) {
 		talkPage.append();
 		Morebits.wiki.removeCheckpoint();  // all page updates have been started
 	}).fail(function(data){
-		console.log( 'API failed :(', data );
+		console.log( 'API failed :(', data ); // eslint-disable-line no-console
 	});
 };
 })(jQuery);

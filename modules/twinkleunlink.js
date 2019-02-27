@@ -18,9 +18,11 @@ Twinkle.unlink = function twinkleunlink() {
 	if( mw.config.get('wgNamespaceNumber') < 0 || mw.config.get('wgPageName') === 'Wikipedia:沙盒' ) {
 		return;
 	}
-	if( Morebits.userIsInGroup( 'sysop' ) ) {
-		Twinkle.addPortletLink( Twinkle.unlink.callback, "链入", "tw-unlink", "取消到本页的链接" );
-	}
+	mw.user.getRights().then(function (rights) {
+		if( rights.indexOf('sysop') !== -1 ) {
+			Twinkle.addPortletLink( Twinkle.unlink.callback, "链入", "tw-unlink", "取消到本页的链接" );
+		}
+	});
 };
 
 Twinkle.unlink.getChecked2 = function twinkleunlinkGetChecked2( nodelist ) {

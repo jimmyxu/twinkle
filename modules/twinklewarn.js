@@ -28,7 +28,7 @@ Twinkle.warn = function twinklewarn() {
 			$vandalTalkLink.css("font-weight", "bold");
 		}
 	}
-	
+
 	// Override the mw.notify function to allow us to inject a link into the
 	// rollback success popup. Only users with the 'rollback' right need this,
 	// but we have no nice way of knowing who has that right (what with global
@@ -44,7 +44,7 @@ Twinkle.warn = function twinklewarn() {
 			// (MediaWiki:Rollback-success-notify) changes.
 			var regexMatch;
 			if ( options && options.title && mw.msg && options.title === mw.msg('actioncomplete') &&
-				message && $.isArray(message) && message[0] instanceof HTMLParagraphElement &&
+				message && Array.isArray(message) && message[0] instanceof HTMLParagraphElement &&
 				(regexMatch = /^(?:已回退|已還原 )(.+)(?:的编辑| 所做的編輯)/.exec(message[0].innerText))
 			) {
 				// Create a nicely-styled paragraph to place the link in
@@ -54,17 +54,17 @@ Twinkle.warn = function twinklewarn() {
 				$p.css("border-top", "1px #666 solid");
 				$p.css("cursor", "default");
 				$p.click(function(e) { e.stopPropagation(); });
-				
+
 				// Create the new talk link and append it to the end of the message
 				var $vandalTalkLink = $('<a/>');
 				$vandalTalkLink.text("用Twinkle警告用户");
 				//$vandalTalkLink.css("display", "block");
 				$vandalTalkLink.attr("href", mw.util.getUrl("User talk:" + regexMatch[1]));
 				Twinkle.warn.makeVandalTalkLink($vandalTalkLink);
-				
+
 				$p.append($vandalTalkLink);
 				message[0].appendChild($p.get()[0]);
-				
+
 				// Don't auto-hide the notification. It only stays around for 5 seconds by
 				// default, which might not be enough time for the user to read it and
 				// click the link
@@ -73,7 +73,7 @@ Twinkle.warn = function twinklewarn() {
 			mw.notifyOriginal.apply(mw, arguments);
 		};
 	}
-	
+
 	// for testing, use:
 	// mw.notify([ $("<p>Reverted edits by foo; changed</p>")[0] ], { title: mw.msg('actioncomplete') } );
 };
@@ -1018,9 +1018,10 @@ Twinkle.warn.callback.change_category = function twinklewarnCallbackChangeCatego
 	// clear overridden label on article textbox
 	Morebits.quickForm.setElementTooltipVisibility(e.target.root.article, true);
 	Morebits.quickForm.resetElementLabel(e.target.root.article);
-
 	// hide the big red notice
 	$("#tw-warn-red-notice").remove();
+	// add custom label.redWarning
+	Twinkle.warn.callback.change_subcategory(e);
 };
 
 Twinkle.warn.callback.change_subcategory = function twinklewarnCallbackChangeSubcategory(e) {
@@ -1033,7 +1034,8 @@ Twinkle.warn.callback.change_subcategory = function twinklewarnCallbackChangeSub
 		"uw-agf-sock": "Optional username of other account (without User:) ",
 		"uw-bite": "Username of 'bitten' user (without User:) ",
 		"uw-socksuspect": "Username of sock master, if known (without User:) ",
-		"uw-username": "Username violates policy because... "
+		"uw-username": "Username violates policy because... ",
+		"uw-aiv": "Optional username that was reported (without User:) "
 	};
 
 	if( main_group === 'singlenotice' || main_group === 'singlewarn' ) {
@@ -1180,7 +1182,7 @@ Twinkle.warn.callbacks = {
 		text += Twinkle.warn.callbacks.getWarningWikitext(params.sub_group, params.article,
 			params.reason, params.main_group === 'custom') + "--~~~~";
 
-		if ( Twinkle.getPref('showSharedIPNotice') && Morebits.isIPAddress( mw.config.get('wgTitle') ) ) {
+		if ( Twinkle.getPref('showSharedIPNotice') && mw.util.isIPAddress( mw.config.get('wgTitle') ) ) {
 			Morebits.status.info( '信息', '添加共享IP说明' );
 			text +=  "\n{{subst:SharedIPAdvice}}";
 		}
@@ -1219,7 +1221,7 @@ Twinkle.warn.callbacks = {
 				if ( params.sub_group === "uw-socksuspect" ) {  // this template requires a username
 					summary += "，[[User:" + params.article + "]]的";
 				} else {
-					summary += "，于[[" + params.article + "]]";
+					summary += "，于[[:" + params.article + "]]";
 				}
 			}
 		}

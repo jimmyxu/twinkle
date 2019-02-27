@@ -180,7 +180,7 @@ Twinkle.image.callbacks = {
 			var usertalkpage = new Morebits.wiki.page('User talk:' + initialContrib, "通知上传者(" + initialContrib + ")");
 			var notifytext = "\n{{subst:Uploadvionotice|" + Morebits.pageNameNorm + "}}--~~~~";
 			usertalkpage.setAppendText(notifytext);
-			usertalkpage.setEditSummary("通知：文件[[" + Morebits.pageNameNorm + "]]快速删除提名" + Twinkle.getPref('summaryAd'));
+			usertalkpage.setEditSummary("通知：文件[[:" + Morebits.pageNameNorm + "]]快速删除提名" + Twinkle.getPref('summaryAd'));
 			usertalkpage.setCreateOption('recreate');
 			switch (Twinkle.getPref('deliWatchUser')) {
 				case 'yes':

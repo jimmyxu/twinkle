@@ -94,10 +94,12 @@ Twinkle是维基人用于快速执行常见维护工作（如提交删除候选�
 [Twinkle文档]: https://zh.wikipedia.org/wiki/Help:Twinkle
 [WP:TWPREFS]: https://zh.wikipedia.org/wiki/WP:TWPREFS
 [MediaWiki:Gadget-Twinkle.js]: https://zh.wikipedia.org/wiki/MediaWiki:Gadget-Twinkle.js
+[MediaWiki:Gadget-Twinkle.css]: https://zh.wikipedia.org/wiki/MediaWiki:Gadget-Twinkle.css
+[MediaWiki:Gadget-Twinkle-pagestyles.css]: https://zh.wikipedia.org/wiki/MediaWiki:Gadget-Twinkle-pagestyles.css
 [MediaWiki:Gadget-morebits.js]: https://zh.wikipedia.org/wiki/MediaWiki:Gadget-morebits.js
 [MediaWiki:Gadget-morebits.css]: https://zh.wikipedia.org/wiki/MediaWiki:Gadget-morebits.css
 [MediaWiki:Gadgets-definition]: https://zh.wikipedia.org/wiki/MediaWiki:Gadgets-definition
-[Git::Repository]: http://search.cpan.org/perldoc?Git%3A%3ARepository
-[MediaWiki::Bot]: http://search.cpan.org/perldoc?MediaWiki%3A%3ABot
-[App::cpanminus]: http://search.cpan.org/perldoc?App%3A%3Acpanminus
-[jq_style]: http://contribute.jquery.org/style-guide/js/
+[Git::Repository]: https://metacpan.org/pod/Git::Repository
+[MediaWiki::Bot]: https://metacpan.org/pod/MediaWiki::Bot
+[App::cpanminus]: https://metacpan.org/pod/App::cpanminus
+[jq_style]: https://contribute.jquery.org/style-guide/js/
