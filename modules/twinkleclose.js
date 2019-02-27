@@ -198,6 +198,10 @@ Twinkle.close.codes = {
 			label: '并入',
 			action: 'noop'
 		},
+		'ma': {
+			label: '允许并入',
+			action: 'noop'
+		},
 		'nc': {
 			label: '无共识',
 			action: 'keep'
