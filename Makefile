@@ -1,7 +1,6 @@
 all:
 
-modules = modules/friendlyshared.js \
-		  modules/friendlytag.js \
+modules = modules/friendlytag.js \
 		  modules/friendlytalkback.js \
 		  modules/twinklearv.js \
 		  modules/twinklebatchdelete.js \
@@ -19,10 +18,7 @@ modules = modules/friendlyshared.js \
 		  modules/twinklewarn.js \
 		  modules/twinklexfd.js
 
-deploy: twinkle.js morebits.js morebits.css $(modules)
+deploy: twinkle.js twinkle.css morebits.js morebits.css twinkle-pagestyles.css $(modules)
 	./sync.pl ${ARGS} --deploy $^
-
-test: twinkle.js morebits.js morebits.css $(modules)
-	./sync.pl ${ARGS} --lang=test --family=wikipedia --push $^
 
 .PHONY: deploy test all

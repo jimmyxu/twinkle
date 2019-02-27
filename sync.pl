@@ -44,7 +44,6 @@ my %deploys = (
 	'twinkle-pagestyles.css' => 'MediaWiki:Gadget-Twinkle-pagestyles.css',
 	'morebits.js' => 'MediaWiki:Gadget-morebits.js',
 	'morebits.css' => 'MediaWiki:Gadget-morebits.css',
-	'modules/friendlyshared.js' => 'MediaWiki:Gadget-friendlyshared.js',
 	'modules/friendlytag.js' => 'MediaWiki:Gadget-friendlytag.js',
 	'modules/friendlytalkback.js' => 'MediaWiki:Gadget-friendlytalkback.js',
 	'modules/twinklearv.js' => 'MediaWiki:Gadget-twinklearv.js',
