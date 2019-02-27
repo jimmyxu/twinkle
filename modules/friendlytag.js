@@ -140,6 +140,20 @@ Twinkle.tag.updateSortOrder = function(e) {
 			checkbox.checked = true;
 		}
 		switch (tag) {
+			case "expand language":
+				checkbox.subgroup = [ {
+						name: 'expandLanguageLangCode',
+						type: 'input',
+						label: '语言代码：',
+						tooltip: '可参照哪种语言的相应条目来扩充'
+					}, {
+						name: 'expandLanguageArticle',
+						type: 'input',
+						label: '条目名：',
+						tooltip: '外语维基条目名称，无需跨语言前缀'
+					},
+				]
+				break;
 			case "merge":
 			case "merge from":
 			case "merge to":
@@ -181,6 +195,14 @@ Twinkle.tag.updateSortOrder = function(e) {
 						tooltip: '可选，但强烈推荐。如不需要请留空。仅在只输入了一个条目名时可用。'
 					});
 				}
+				break;
+			case "missing information":
+				checkbox.subgroup = {
+					name: 'missingInformation',
+					type: 'input',
+					label: '此条目缺少有关……的资讯：',
+					size: 35
+				};
 				break;
 			case "notability":
 				checkbox.subgroup = {
@@ -302,7 +324,7 @@ Twinkle.tag.article.tags = {
 	"copyedit": "需要编修，以确保文法、用词、语气、格式、标点等使用恰当",
 	"dead end": "需要更多内部连接以构筑百科全书的链接网络",
 	"disputed": "内容疑欠准确，有待查证",
-	"expand": "需要扩充",
+	"expand language": "可参照外语维基百科相应条目来扩充",
 	"expert": "需要精通或熟悉本主题的专业人士参与及协助编辑",
 	"external links": "使用外部链接的方式可能不符合维基百科的方针或指引",
 	"fansite": "类似爱好者网页",
@@ -312,11 +334,12 @@ Twinkle.tag.article.tags = {
 	"in-universe": "使用小说故事内的观点描述一个虚构事物",
 	"inappropriate person": "使用不适当的第一人称和第二人称",
 	"inappropriate tone": "语调或风格可能不适合百科全书的写作方式",
-	"lead section": "导言部分也许不足以概括其内容",
+	"lead section": "序言章节没有充分总结其内容要点",
 	"lead section too long": "导言部分也许过于冗长",
 	"merge": "建议此页面与页面合并",
 	"merge from": "建议将页面并入本页面",
 	"merge to": "建议将此页面并入页面",
+	"missing information": "缺少资讯",
 	"newsrelease": "阅读起来像是新闻稿及包含过度的宣传性语调",
 	"no footnotes": "因为没有内文引用而来源仍然不明",
 	"non-free": "可能过多或不当地使用了受版权保护的文字、图像或/及多媒体文件",
@@ -386,7 +409,7 @@ Twinkle.tag.article.tagCategories = {
 			"review"
 		],
 		"内容": [
-			"expand",
+			"missing information",
 			"substub",
 			"unencyclopedic"
 		],
@@ -424,7 +447,8 @@ Twinkle.tag.article.tagCategories = {
 	"具体内容问题": {
 		"语言": [
 			"notmandarin",
-			"roughtranslation"
+			"roughtranslation",
+			"expand language"
 		],
 		"链接": [
 			"dead end",
@@ -585,6 +609,7 @@ Twinkle.tag.rareList = [
 // Contains those article tags that *do not* work inside {{multiple issues}}.
 Twinkle.tag.multipleIssuesExceptions = [
 	'catimprove',
+	'expand language',
 	'merge',
 	'merge from',
 	'merge to',
@@ -618,6 +643,12 @@ Twinkle.tag.callbacks = {
 
 				// prompt for other parameters, based on the tag
 				switch( tagName ) {
+					case 'expand language':
+						currentTag += '|1=' + params.tagParameters.expandLanguageLangCode;
+						if (params.tagParameters.expandLanguageArticle !== null) {
+							currentTag += '|page=' + params.tagParameters.expandLanguageArticle;
+						}
+						break;
 					case 'merge':
 					case 'merge to':
 					case 'merge from':
@@ -639,6 +670,9 @@ Twinkle.tag.callbacks = {
 								currentTag += '|discuss=Talk:' + params.discussArticle + '#' + params.talkDiscussionTitle;
 							}
 						}
+						break;
+					case 'missing information':
+						currentTag += '|' + params.tagParameters.missingInformation;
 						break;
 					default:
 						break;
@@ -851,6 +885,9 @@ Twinkle.tag.callback.evaluate = function friendlytagCallbackEvaluate(e) {
 			params.tags = form.getChecked( 'articleTags' );
 			params.group = form.group.checked;
 			params.tagParameters = {
+				expandLanguageLangCode: form["articleTags.expandLanguageLangCode"] ? form["articleTags.expandLanguageLangCode"].value : null,
+				expandLanguageArticle: form["articleTags.expandLanguageArticle"] ? form["articleTags.expandLanguageArticle"].value : null,
+				missingInformation: form["articleTags.missingInformation"] ? form["articleTags.missingInformation"].value : null,
 				notability: form["articleTags.notability"] ? form["articleTags.notability"].value : null
 			};
 			// common to {{merge}}, {{merge from}}, {{merge to}}
@@ -874,6 +911,14 @@ Twinkle.tag.callback.evaluate = function friendlytagCallbackEvaluate(e) {
 	if( ((params.tags.indexOf("merge") !== -1) + (params.tags.indexOf("merge from") !== -1) +
 		(params.tags.indexOf("merge to") !== -1)) > 1 ) {
 		alert( '请在{{merge}}、{{merge from}}和{{merge to}}中选择一个。如果需要多次合并，请使用{{merge}}并用管道符分隔条目名（但在这种情形中Twinkle不能自动标记其他条目）。' );
+		return;
+	}
+	if( params.tags.indexOf('missing information') !== -1 && params.tagParameters.missingInformation.trim() === '') {
+		alert('您必须为{{missing information}}标记指定缺少何种资讯。');
+		return;
+	}
+	if( params.tags.indexOf('expand language') !== -1 && params.tagParameters.expandLanguageLangCode.trim() === '') {
+		alert('您必须为{{expand language}}标记指定语言代码。');
 		return;
 	}
 	if( (params.mergeTagOther || params.mergeReason) && params.mergeTarget.indexOf('|') !== -1 ) {
